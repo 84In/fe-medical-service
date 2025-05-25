@@ -42,7 +42,8 @@ import {
   Newspaper,
   FileType2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 interface NavItem {
   title: string;
@@ -186,6 +187,7 @@ export function MedicalAdminNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["Dashboard"]);
   const [activeItem, setActiveItem] = useState("Dashboard");
+  const pathname = usePathname();
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>
@@ -201,6 +203,39 @@ export function MedicalAdminNav() {
       setIsMobileMenuOpen(false);
     }
   };
+
+  useEffect(() => {
+    const findActiveItem = (
+      items: NavItem[]
+    ): { active: string; parent?: string } | null => {
+      for (const item of items) {
+        if (item.href === pathname) {
+          return { active: item.title };
+        }
+        if (item.children) {
+          const childMatch = item.children.find(
+            (child) => child.href === pathname
+          );
+          if (childMatch) {
+            return { active: childMatch.title, parent: item.title };
+          }
+        }
+      }
+      return null;
+    };
+
+    const match = findActiveItem(navigationItems);
+    if (match) {
+      setActiveItem(match.active);
+      if (typeof match.parent === "string") {
+        setExpandedItems((prev) =>
+          match.parent && prev.includes(match.parent)
+            ? prev
+            : [...prev, match.parent!]
+        );
+      }
+    }
+  }, [pathname]);
 
   return (
     <>
