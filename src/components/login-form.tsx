@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import axios from "@/utils/axios";
+import { isAxiosError } from "axios";
 
 import { useForm } from "react-hook-form";
 
@@ -23,13 +24,12 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const router = useRouter();
   const [error, setError] = useState("");
-  const token = useAuthStore((state) => state.token);
-  const user = useAuthStore((state) => state.user);
-  const username = useAuthStore((state) => state.username);
+  // const token = useAuthStore((state) => state.token);
+  // const user = useAuthStore((state) => state.user);
+  // const username = useAuthStore((state) => state.username);
   const setToken = useAuthStore((state) => state.setToken);
-  const setUser = useAuthStore((state) => state.setUser);
   const setUsername = useAuthStore((state) => state.setUsername);
-  const logout = useAuthStore((state) => state.logout);
+  // const logout = useAuthStore((state) => state.logout);
   const fetchUserData = useAuthStore((state) => state.fetchUser);
 
   const {
@@ -46,10 +46,16 @@ export function LoginForm({
         setToken(res.data.result.token);
         setUsername(res.data.result.username);
         fetchUserData();
+        router.push("/admin");
+      } else {
+        setError(res.data.message || "Đăng nhập thất bại");
       }
-      router.push("/admin");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message || "Đăng nhập thất bại");
+      } else {
+        setError("Đăng nhập thất bại");
+      }
     }
   }
 
