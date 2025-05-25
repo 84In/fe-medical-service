@@ -1,3 +1,5 @@
+import { MedicalAdminNav } from "@/components/medical-admin-nav";
+
 export const metadata = {
   title: "Admin Dashboard",
   description: "Trang quản trị hệ thống",
@@ -7,11 +9,9 @@ export default function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="bg-gray-50 min-h-screen p-4">
-      <header className="mb-6 border-b border-gray-300 pb-4">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      </header>
-      <main>{children}</main>
+    <div className="flex min-h-screen bg-gray-50">
+      <MedicalAdminNav />
+      <main className="flex-1 p-8 pt-20 lg:pt-8">{children}</main>
     </div>
   );
 }
