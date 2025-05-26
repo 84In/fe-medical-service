@@ -1,6 +1,6 @@
 export default function AdminPage() {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="px-6 py-8">
       <div className="bg-white rounded-lg shadow-sm p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Bảng điều khiển trung tâm y tế
