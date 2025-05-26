@@ -43,7 +43,7 @@ import {
   FileType2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface NavItem {
   title: string;
@@ -68,7 +68,7 @@ const navigationItems: NavItem[] = [
       {
         title: "Tất cả bác sĩ",
         icon: <Users className="h-4 w-4" />,
-        href: "/admin/doctors/all",
+        href: "/admin/doctors",
       },
       //   {
       //     title: "Tạo mới bác sĩ",
@@ -106,7 +106,7 @@ const navigationItems: NavItem[] = [
       {
         title: "Tất cả dịch vụ",
         icon: <ClipboardList className="h-4 w-4" />,
-        href: "/admin/services/all",
+        href: "/admin/services",
       },
       {
         title: "Loại dịch vụ",
@@ -124,7 +124,7 @@ const navigationItems: NavItem[] = [
       {
         title: "Tất cả tin tức",
         icon: <Newspaper className="h-4 w-4" />,
-        href: "/admin/news/all",
+        href: "/admin/news",
       },
       {
         title: "Danh mục tin tức",
@@ -188,6 +188,7 @@ export function MedicalAdminNav() {
   const [expandedItems, setExpandedItems] = useState<string[]>(["Dashboard"]);
   const [activeItem, setActiveItem] = useState("Dashboard");
   const pathname = usePathname();
+  const router = useRouter();
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>
@@ -199,6 +200,7 @@ export function MedicalAdminNav() {
 
   const handleItemClick = (title: string, href: string) => {
     setActiveItem(title);
+    router.push(href);
     if (window.innerWidth < 1024) {
       setIsMobileMenuOpen(false);
     }

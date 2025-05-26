@@ -10,7 +10,7 @@ export default function LoginLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="bg-gray-50 min-h-screen p-4">
+    <div className="bg-gray-50 h-full p-4">
       <main>{children}</main>
       <Toaster />
     </div>
