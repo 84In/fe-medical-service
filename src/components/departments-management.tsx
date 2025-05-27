@@ -186,7 +186,7 @@ const mockDoctors: Doctor[] = [
   },
 ];
 
-export function DoctorsManagement() {
+export function DepartmentsManagement() {
   const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
