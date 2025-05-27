@@ -1,3 +1,4 @@
+import DynamicBreadcrumb from "@/components/dynamic-breadcrumb";
 import { MedicalAdminNav } from "@/components/medical-admin-nav";
 
 export const metadata = {
@@ -19,6 +20,9 @@ export default function AdminLayout({
         {/*bg-white*/}
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
+          <div className="px-6 pt-6">
+            <DynamicBreadcrumb />
+          </div>
           <div className="h-full">{children}</div>
         </main>
       </div>
