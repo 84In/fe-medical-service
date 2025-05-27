@@ -19,8 +19,12 @@ export const metadata: Metadata = {
   keywords:
     "medical, healthcare, admin, dashboard, hospital, clinic, patient management",
   authors: [{ name: "VASD IT Team" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "noindex, nofollow",
+};
+//Viewport settings for responsive design
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
