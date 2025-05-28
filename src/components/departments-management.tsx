@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -15,208 +23,103 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Department } from "@/types/doctor";
 import {
-  Plus,
-  Search,
+  Activity,
+  Building2,
+  Clock,
   Edit,
   Eye,
+  FileText,
   MoreVertical,
-  Stethoscope,
-  MapPin,
-  Calendar,
-  Award,
+  Plus,
+  Search,
+  Trash2,
   Users,
-  Clock,
+  Wand2,
 } from "lucide-react";
-import { Doctor, Department, Position, Title } from "@/types/doctor";
+import { useState } from "react";
+import { TemplateSelector } from "./template-selector";
+import { WysiwygEditor } from "./wysiwyg-editor";
+import Editor from "./Editor";
 
 // Mock data
 const mockDepartments: Department[] = [
   {
     id: 1,
     name: "Tim mạch",
-    contentHtml: "<p>Tim và chăm sóc tim mạch</p>",
+    contentHtml: `<h2>Khoa Tim mạch - Chăm sóc tim mạch chuyên nghiệp</h2>
+<p>Khoa Tim mạch của VitaCare Medical là một trong những khoa hàng đầu về điều trị các bệnh lý tim mạch tại Việt Nam. Với đội ngũ bác sĩ giàu kinh nghiệm và trang thiết bị hiện đại, chúng tôi cam kết mang đến dịch vụ chăm sóc sức khỏe tim mạch tốt nhất.</p>`,
     status: "ACTIVE",
   },
   {
     id: 2,
     name: "Nhi khoa",
-    contentHtml: "<p>Chăm sóc sức khỏe trẻ em</p>",
+    contentHtml: `<h2>Khoa Nhi - Chăm sóc sức khỏe trẻ em toàn diện</h2>
+<p>Khoa Nhi của VitaCare Medical chuyên cung cấp dịch vụ chăm sóc sức khỏe cho trẻ em từ sơ sinh đến 16 tuổi. Với môi trường thân thiện, an toàn và đội ngũ y bác sĩ tận tâm, chúng tôi luôn đặt sức khỏe và sự thoải mái của các bé lên hàng đầu.</p>`,
     status: "ACTIVE",
   },
   {
     id: 3,
     name: "Cấp cứu",
-    contentHtml: "<p>Chăm sóc y tế khẩn cấp</p>",
+    contentHtml: `<h2>Khoa Cấp cứu - Sẵn sàng 24/7</h2>
+<p>Khoa Cấp cứu của VitaCare Medical hoạt động 24/7, sẵn sàng tiếp nhận và xử lý các trường hợp cấp cứu, chấn thương và các tình huống y tế khẩn cấp.</p>`,
     status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Phẫu thuật",
-    contentHtml: "<p>Cung cấp y khoa phẫu thuật</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "X quang",
-    contentHtml: "<p>Chẩn đoán hình ảnh</p>",
-    status: "ACTIVE",
-  },
-];
-
-const mockPositions: Position[] = [
-  {
-    id: 1,
-    name: "Giám đốc",
-    description: "Giám đốc bệnh viện",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Phó giám đốc",
-    description: "Phó giám đốc bệnh viện",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Bác sĩ chuyên khoa",
-    description: "Bác sĩ chuyên khoa",
-    status: "ACTIVE",
-  },
-  { id: 4, name: "Trưởng khoa", description: "Trường khoa", status: "ACTIVE" },
-];
-
-const mockTitles: Title[] = [
-  { id: 1, name: "BS.", description: "Bác sĩ", status: "ACTIVE" },
-  { id: 2, name: "GS.", description: "Giáo sư", status: "ACTIVE" },
-  {
-    id: 3,
-    name: "PGS.",
-    description: "Phó giáo sư",
-    status: "ACTIVE",
-  },
-];
-
-const mockDoctors: Doctor[] = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction:
-      "Bác sĩ tim mạch giàu kinh nghiệm, chuyên về tim mạch can thiệp và phòng ngừa bệnh tim.",
-    experience_years: "15",
-    status: "ACTIVE",
-    department: mockDepartments[0],
-    position: mockPositions[0],
-    title: mockTitles[1],
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction:
-      "Chuyên gia nhi khoa có chuyên môn về phát triển trẻ em và chăm sóc cấp cứu nhi khoa.",
-    experience_years: "12",
-    status: "ACTIVE",
-    department: mockDepartments[1],
-    position: mockPositions[2],
-    title: mockTitles[0],
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction:
-      "Bác sĩ cấp cứu với kinh nghiệm phong phú trong chăm sóc chấn thương và hồi sức cấp cứu.",
-    experience_years: "8",
-    status: "ACTIVE",
-    department: mockDepartments[2],
-    position: mockPositions[1],
-    title: mockTitles[0],
-  },
-  {
-    id: 4,
-    name: "David Kim",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction:
-      "Chuyên gia phẫu thuật với chuyên môn trong phẫu thuật nội soi và phẫu thuật tái tạo.",
-    experience_years: "20",
-    status: "ACTIVE",
-    department: mockDepartments[3],
-    position: mockPositions[3],
-    title: mockTitles[1],
-  },
-  {
-    id: 5,
-    name: "Lisa Thompson",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction:
-      "Chuyên gia chẩn đoán hình ảnh với chuyên môn trong X quang và siêu âm.",
-    experience_years: "10",
-    status: "INACTIVE",
-    department: mockDepartments[4],
-    position: mockPositions[0],
-    title: mockTitles[0],
-  },
-  {
-    id: 6,
-    name: "James Wilson",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction: "Bác sĩ nội khoa với chuyên môn trong quản lý bệnh",
-    experience_years: "18",
-    status: "ACTIVE",
-    department: mockDepartments[0],
-    position: mockPositions[2],
-    title: mockTitles[2],
   },
 ];
 
 export function DepartmentsManagement() {
-  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
+  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const [newDoctor, setNewDoctor] = useState<Partial<Doctor>>({
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(
+    null
+  );
+  const [deletingDepartment, setDeletingDepartment] =
+    useState<Department | null>(null);
+  const [viewingDepartment, setViewingDepartment] = useState<Department | null>(
+    null
+  );
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [newDepartment, setNewDepartment] = useState<Partial<Department>>({
     name: "",
-    avatarUrl: "",
-    introduction: "",
-    experience_years: "",
+    contentHtml: "",
     status: "ACTIVE",
-    department: undefined,
-    position: undefined,
-    title: undefined,
   });
 
-  // Filter doctors
-  const filteredDoctors = doctors.filter((doctor) => {
-    const matchesSearch =
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.position.name.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter departments
+  const filteredDepartments = departments.filter((department) => {
+    const matchesSearch = department.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "ALL" || doctor.status === statusFilter;
-    const matchesDepartment =
-      departmentFilter === "ALL" ||
-      doctor.department.id.toString() === departmentFilter;
+      statusFilter === "ALL" || department.status === statusFilter;
 
-    return matchesSearch && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status: string) => {
@@ -234,62 +137,75 @@ export function DepartmentsManagement() {
     }
   };
 
-  const handleAddDoctor = () => {
-    if (
-      !newDoctor.name ||
-      !newDoctor.department ||
-      !newDoctor.position ||
-      !newDoctor.title
-    )
-      return;
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "Hoạt động";
+      case "INACTIVE":
+        return "Ngừng hoạt động";
+      case "HIDDEN":
+        return "Ẩn";
+      case "DELETED":
+        return "Đã xóa";
+      default:
+        return status;
+    }
+  };
 
-    const doctor: Doctor = {
+  const handleAddDepartment = () => {
+    if (!newDepartment.name || !newDepartment.contentHtml) return;
+
+    const department: Department = {
       id: Date.now(),
-      name: newDoctor.name,
-      avatarUrl: newDoctor.avatarUrl || "/placeholder.svg?height=100&width=100",
-      introduction: newDoctor.introduction || "",
-      experience_years: newDoctor.experience_years || "0",
-      status: (newDoctor.status as Doctor["status"]) || "ACTIVE",
-      department: newDoctor.department,
-      position: newDoctor.position,
-      title: newDoctor.title,
+      name: newDepartment.name,
+      contentHtml: newDepartment.contentHtml,
+      status: (newDepartment.status as Department["status"]) || "ACTIVE",
     };
 
-    setDoctors([...doctors, doctor]);
-    setNewDoctor({
+    setDepartments([...departments, department]);
+    setNewDepartment({
       name: "",
-      avatarUrl: "",
-      introduction: "",
-      experience_years: "",
+      contentHtml: "",
       status: "ACTIVE",
-      department: undefined,
-      position: undefined,
-      title: undefined,
     });
     setIsAddDialogOpen(false);
   };
 
-  const handleEditDoctor = (doctor: Doctor) => {
-    setEditingDoctor(doctor);
+  const handleEditDepartment = (department: Department) => {
+    setEditingDepartment(department);
   };
 
-  const handleUpdateDoctor = () => {
-    if (!editingDoctor) return;
+  const handleUpdateDepartment = () => {
+    if (!editingDepartment) return;
 
-    setDoctors(
-      doctors.map((doctor) =>
-        doctor.id === editingDoctor.id ? editingDoctor : doctor
+    setDepartments(
+      departments.map((department) =>
+        department.id === editingDepartment.id ? editingDepartment : department
       )
     );
-    setEditingDoctor(null);
+    setEditingDepartment(null);
   };
 
-  const handleDeleteDoctor = (id: number) => {
-    setDoctors(
-      doctors.map((doctor) =>
-        doctor.id === id ? { ...doctor, status: "DELETED" as const } : doctor
+  const handleDeleteDepartment = () => {
+    if (!deletingDepartment) return;
+
+    setDepartments(
+      departments.map((department) =>
+        department.id === deletingDepartment.id
+          ? { ...department, status: "DELETED" as const }
+          : department
       )
     );
+    setDeletingDepartment(null);
+  };
+
+  const stripHtml = (html: string) => {
+    return html.replace(/<[^>]*>/g, "");
+  };
+
+  const handleTemplateSelect = (content: string) => {
+    setNewDepartment({ ...newDepartment, contentHtml: content });
+    setShowTemplateSelector(false);
   };
 
   return (
@@ -297,176 +213,117 @@ export function DepartmentsManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý bác sĩ</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Quản lý chuyên khoa
+          </h1>
           <p className="text-gray-600 mt-1">
-            Quản lý thông tin bác sĩ, chuyên khoa và vị trí làm việc. Thêm, sửa
-            hoặc xóa bác sĩ trong hệ thống.
+            Quản lý thông tin các khoa, chuyên môn và mô tả dịch vụ y tế.
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm mới bác sĩ
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Thêm mới bác sĩ</DialogTitle>
-              <DialogDescription>
-                Nhập thông tin bác sĩ mới để thêm vào hệ thống. Các trường có
-                dấu * là bắt buộc.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Họ và tên *</Label>
-                <Input
-                  id="name"
-                  value={newDoctor.name || ""}
-                  onChange={(e) =>
-                    setNewDoctor({ ...newDoctor, name: e.target.value })
-                  }
-                  placeholder="Nhập họ và tên bác sĩ"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="avatarUrl">Ảnh đại diện</Label>
-                <Input
-                  id="avatarUrl"
-                  value={newDoctor.avatarUrl || ""}
-                  onChange={(e) =>
-                    setNewDoctor({ ...newDoctor, avatarUrl: e.target.value })
-                  }
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="introduction">Mô tả</Label>
-                <Textarea
-                  id="introduction"
-                  value={newDoctor.introduction || ""}
-                  onChange={(e) =>
-                    setNewDoctor({ ...newDoctor, introduction: e.target.value })
-                  }
-                  placeholder="Nhập mô tả về bác sĩ"
-                  rows={3}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="experience">Số năm kinh nghiệm</Label>
-                <Input
-                  id="experience"
-                  value={newDoctor.experience_years || ""}
-                  onChange={(e) =>
-                    setNewDoctor({
-                      ...newDoctor,
-                      experience_years: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., 10"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Chức danh *</Label>
-                  <Select
-                    value={newDoctor.title?.id.toString()}
-                    onValueChange={(value) => {
-                      const title = mockTitles.find(
-                        (t) => t.id.toString() === value
-                      );
-                      setNewDoctor({ ...newDoctor, title });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn chức danh" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockTitles.map((title) => (
-                        <SelectItem key={title.id} value={title.id.toString()}>
-                          {title.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="department">Chuyên môn *</Label>
-                  <Select
-                    value={newDoctor.department?.id.toString()}
-                    onValueChange={(value) => {
-                      const department = mockDepartments.find(
-                        (d) => d.id.toString() === value
-                      );
-                      setNewDoctor({ ...newDoctor, department });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn chuyên môn" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockDepartments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id.toString()}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="position">Chức vụ *</Label>
-                  <Select
-                    value={newDoctor.position?.id.toString()}
-                    onValueChange={(value) => {
-                      const position = mockPositions.find(
-                        (p) => p.id.toString() === value
-                      );
-                      setNewDoctor({ ...newDoctor, position });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn chức vụ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockPositions.map((pos) => (
-                        <SelectItem key={pos.id} value={pos.id.toString()}>
-                          {pos.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Trạng thái</Label>
-                  <Select
-                    value={newDoctor.status}
-                    onValueChange={(value) =>
-                      setNewDoctor({
-                        ...newDoctor,
-                        status: value as Doctor["status"],
+        <div className="flex gap-2">
+          <Dialog
+            open={showTemplateSelector}
+            onOpenChange={setShowTemplateSelector}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Wand2 className="h-4 w-4 mr-2" />
+                Mẫu có sẵn
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Chọn mẫu chuyên khoa</DialogTitle>
+              </DialogHeader>
+              <TemplateSelector onSelectTemplate={handleTemplateSelect} />
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm chuyên khoa
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Thêm chuyên khoa mới</DialogTitle>
+                <DialogDescription>
+                  Tạo chuyên khoa mới với editor trực quan. Không cần biết HTML!
+                </DialogDescription>
+              </DialogHeader>
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+                  <TabsTrigger value="content">Nội dung mô tả</TabsTrigger>
+                </TabsList>
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name">Tên chuyên khoa *</Label>
+                      <Input
+                        id="name"
+                        value={newDepartment.name || ""}
+                        onChange={(e) =>
+                          setNewDepartment({
+                            ...newDepartment,
+                            name: e.target.value,
+                          })
+                        }
+                        placeholder="Ví dụ: Tim mạch, Nhi khoa, Cấp cứu..."
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="status">Trạng thái</Label>
+                      <Select
+                        value={newDepartment.status}
+                        onValueChange={(value) =>
+                          setNewDepartment({
+                            ...newDepartment,
+                            status: value as Department["status"],
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                          <SelectItem value="INACTIVE">
+                            Ngừng hoạt động
+                          </SelectItem>
+                          <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="content" className="space-y-4">
+                  {/* <WysiwygEditor
+                    value={newDepartment.contentHtml || ""}
+                    onChange={(content) =>
+                      setNewDepartment({
+                        ...newDepartment,
+                        contentHtml: content,
                       })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                      <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
-                      <SelectItem value="HIDDEN">Ẩn</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleAddDoctor}>Thêm bác sĩ</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                    height={400}
+                    placeholder="Bắt đầu viết mô tả về chuyên khoa..."
+                  /> */}
+                  <Editor />
+                </TabsContent>
+              </Tabs>
+              <DialogFooter>
+                <Button
+                  onClick={handleAddDepartment}
+                  disabled={!newDepartment.name || !newDepartment.contentHtml}
+                >
+                  Thêm chuyên khoa
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -480,7 +337,7 @@ export function DepartmentsManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Tìm kiếm bác sĩ, chuyên khoa, chức danh, chức vụ..."
+                  placeholder="Tìm kiếm theo tên chuyên khoa..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -489,48 +346,32 @@ export function DepartmentsManagement() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Lọc theo trạng thái" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
                 <SelectItem value="ACTIVE">Hoạt động</SelectItem>
                 <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
                 <SelectItem value="HIDDEN">Ẩn</SelectItem>
-                <SelectItem value="DELETED">Xoá</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={departmentFilter}
-              onValueChange={setDepartmentFilter}
-            >
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả chuyên khoa</SelectItem>
-                {mockDepartments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="DELETED">Đã xóa</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Status */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600" />
+              <Building2 className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng số bác sĩ
+                  Tổng chuyên khoa
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {doctors.length}
+                  {departments.length}
                 </p>
               </div>
             </div>
@@ -539,11 +380,11 @@ export function DepartmentsManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <Stethoscope className="h-8 w-8 text-green-600" />
+              <Activity className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Hoạt động</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {doctors.filter((d) => d.status === "ACTIVE").length}
+                  {departments.filter((d) => d.status === "ACTIVE").length}
                 </p>
               </div>
             </div>
@@ -558,7 +399,7 @@ export function DepartmentsManagement() {
                   Ngừng hoạt động
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {doctors.filter((d) => d.status === "INACTIVE").length}
+                  {departments.filter((d) => d.status === "INACTIVE").length}
                 </p>
               </div>
             </div>
@@ -567,11 +408,11 @@ export function DepartmentsManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <Award className="h-8 w-8 text-purple-600" />
+              <Users className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Chuyên khoa</p>
+                <p className="text-sm font-medium text-gray-600">Ẩn</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {mockDepartments.length}
+                  {departments.filter((d) => d.status === "HIDDEN").length}
                 </p>
               </div>
             </div>
@@ -579,287 +420,238 @@ export function DepartmentsManagement() {
         </Card>
       </div>
 
-      {/* Doctors Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDoctors.map((doctor) => (
-          <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage
-                      src={doctor.avatarUrl || "/placeholder.svg"}
-                      alt={doctor.name}
-                    />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-semibold">
-                      {doctor.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-gray-900">
-                      {doctor.title.name} {doctor.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {doctor.position.name}
-                    </p>
-                    <Badge className={`mt-1 ${getStatusColor(doctor.status)}`}>
-                      {doctor.status === "ACTIVE"
-                        ? " Hoạt động"
-                        : doctor.status === "INACTIVE"
-                        ? "Ngừng hoạt động"
-                        : doctor.status === "HIDDEN"
-                        ? "Ẩn"
-                        : "Đã xoá"}
-                    </Badge>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEditDoctor(doctor)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Chỉnh sửa
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Xem chi tiết
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteDoctor(doctor.id)}
-                      className="text-red-600"
-                    >
-                      <MoreVertical className="mr-2 h-4 w-4" />
-                      Xoá
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  {doctor.department.name}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {doctor.experience_years} năm kinh nghiệm
-                </div>
-                <p className="text-sm text-gray-700 line-clamp-3">
-                  {doctor.introduction}
-                </p>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleEditDoctor(doctor)}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Chỉnh sửa
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Eye className="h-4 w-4 mr-1" />
-                  Xem hiển thị
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Departments Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách chuyên khoa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tên chuyên khoa</TableHead>
+                  <TableHead>Mô tả</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDepartments.map((department) => (
+                  <TableRow key={department.id}>
+                    <TableCell className="font-medium">
+                      {department.name}
+                    </TableCell>
+                    <TableCell className="max-w-md">
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {stripHtml(department.contentHtml)}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(department.status)}>
+                        {getStatusText(department.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setViewingDepartment(department)}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Xem chi tiết
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditDepartment(department)}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeletingDepartment(department)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-      {/* No results */}
-      {filteredDoctors.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Không tìm thấy bác sĩ
-            </h3>
-            <p className="text-gray-600">
-              Không có bác sĩ nào phù hợp với tiêu chí tìm kiếm của bạn. Hãy thử
-              thay đổi từ khoá hoặc bộ lọc.
-            </p>
-          </CardContent>
-        </Card>
+          {/* No results */}
+          {filteredDepartments.length === 0 && (
+            <div className="text-center py-12">
+              <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Không tìm thấy chuyên khoa
+              </h3>
+              <p className="text-gray-600">
+                Không có chuyên khoa nào phù hợp với tiêu chí tìm kiếm của bạn.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* View Dialog */}
+      {viewingDepartment && (
+        <Dialog
+          open={!!viewingDepartment}
+          onOpenChange={() => setViewingDepartment(null)}
+        >
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {viewingDepartment.name}
+              </DialogTitle>
+              <DialogDescription>
+                Chi tiết thông tin chuyên khoa
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">
+                  Trạng thái
+                </Label>
+                <div className="mt-1">
+                  <Badge className={getStatusColor(viewingDepartment.status)}>
+                    {getStatusText(viewingDepartment.status)}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700">
+                  Mô tả chi tiết
+                </Label>
+                <div className="mt-1 p-3 bg-gray-50 rounded-lg prose prose-sm max-w-none">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: viewingDepartment.contentHtml,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Edit Dialog */}
-      {editingDoctor && (
+      {editingDepartment && (
         <Dialog
-          open={!!editingDoctor}
-          onOpenChange={() => setEditingDoctor(null)}
+          open={!!editingDepartment}
+          onOpenChange={() => setEditingDepartment(null)}
         >
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Chỉnh sửa</DialogTitle>
+              <DialogTitle>Chỉnh sửa chuyên khoa</DialogTitle>
               <DialogDescription>
-                Cập nhật thông tin bác sĩ để lưu thay đổi vào hệ thống.
+                Cập nhật thông tin chuyên khoa
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">Họ và tên</Label>
-                <Input
-                  id="edit-name"
-                  value={editingDoctor.name}
-                  onChange={(e) =>
-                    setEditingDoctor({ ...editingDoctor, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-avatarUrl">Cập nhật ảnh đại diện</Label>
-                <Input
-                  id="edit-avatarUrl"
-                  value={editingDoctor.avatarUrl}
-                  onChange={(e) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      avatarUrl: e.target.value,
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+                <TabsTrigger value="content">Nội dung mô tả</TabsTrigger>
+              </TabsList>
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-name">Tên chuyên khoa</Label>
+                    <Input
+                      id="edit-name"
+                      value={editingDepartment.name}
+                      onChange={(e) =>
+                        setEditingDepartment({
+                          ...editingDepartment,
+                          name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-status">Trạng thái</Label>
+                    <Select
+                      value={editingDepartment.status}
+                      onValueChange={(value) =>
+                        setEditingDepartment({
+                          ...editingDepartment,
+                          status: value as Department["status"],
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                        <SelectItem value="INACTIVE">
+                          Ngừng hoạt động
+                        </SelectItem>
+                        <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                        <SelectItem value="DELETED">Đã xóa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="content" className="space-y-4">
+                <WysiwygEditor
+                  value={editingDepartment.contentHtml}
+                  onChange={(content) =>
+                    setEditingDepartment({
+                      ...editingDepartment,
+                      contentHtml: content,
                     })
                   }
+                  height={400}
+                  placeholder="Chỉnh sửa mô tả chuyên khoa..."
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-introduction">Mô tả</Label>
-                <Textarea
-                  id="edit-introduction"
-                  value={editingDoctor.introduction}
-                  onChange={(e) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      introduction: e.target.value,
-                    })
-                  }
-                  rows={3}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-experience">Số năm kinh nghiệm</Label>
-                <Input
-                  id="edit-experience"
-                  value={editingDoctor.experience_years}
-                  onChange={(e) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      experience_years: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-title">Chức danh</Label>
-                  <Select
-                    value={editingDoctor.title.id.toString()}
-                    onValueChange={(value) => {
-                      const title = mockTitles.find(
-                        (t) => t.id.toString() === value
-                      );
-                      if (title) setEditingDoctor({ ...editingDoctor, title });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockTitles.map((title) => (
-                        <SelectItem key={title.id} value={title.id.toString()}>
-                          {title.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-department">Chuyên môn</Label>
-                  <Select
-                    value={editingDoctor.department.id.toString()}
-                    onValueChange={(value) => {
-                      const department = mockDepartments.find(
-                        (d) => d.id.toString() === value
-                      );
-                      if (department)
-                        setEditingDoctor({ ...editingDoctor, department });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockDepartments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id.toString()}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-position">Chức vụ</Label>
-                  <Select
-                    value={editingDoctor.position.id.toString()}
-                    onValueChange={(value) => {
-                      const position = mockPositions.find(
-                        (p) => p.id.toString() === value
-                      );
-                      if (position)
-                        setEditingDoctor({ ...editingDoctor, position });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockPositions.map((pos) => (
-                        <SelectItem key={pos.id} value={pos.id.toString()}>
-                          {pos.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-status">Trạng thái</Label>
-                  <Select
-                    value={editingDoctor.status}
-                    onValueChange={(value) =>
-                      setEditingDoctor({
-                        ...editingDoctor,
-                        status: value as Doctor["status"],
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                      <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
-                      <SelectItem value="HIDDEN">Ẩn</SelectItem>
-                      <SelectItem value="DELETED">Xoá</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
             <DialogFooter>
-              <Button onClick={handleUpdateDoctor}>Cập nhật bác sĩ</Button>
+              <Button onClick={handleUpdateDepartment}>Cập nhật</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deletingDepartment}
+        onOpenChange={() => setDeletingDepartment(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa chuyên khoa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa chuyên khoa "{deletingDepartment?.name}
+              "? Hành động này sẽ đánh dấu chuyên khoa là đã xóa và không thể
+              hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteDepartment}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
