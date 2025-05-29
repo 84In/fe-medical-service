@@ -1,18 +1,10 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,20 +15,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -45,26 +30,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Department } from "@/types/doctor";
 import {
-  Activity,
-  Building2,
-  Clock,
-  Edit,
-  Eye,
-  FileText,
-  MoreVertical,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   Plus,
   Search,
-  Trash2,
+  Edit,
+  Eye,
+  MoreVertical,
+  Building2,
   Users,
-  Wand2,
+  Activity,
+  Clock,
+  Trash2,
+  FileText,
 } from "lucide-react";
-import { useState } from "react";
-import { TemplateSelector } from "./template-selector";
-import { WysiwygEditor } from "./wysiwyg-editor";
-import Editor from "./Editor";
+import type { Department } from "@/types/doctor";
+import { TiptapEditor } from "./tiptap-editor";
 
 // Mock data
 const mockDepartments: Department[] = [
@@ -104,7 +101,6 @@ export function DepartmentsManagement() {
   const [viewingDepartment, setViewingDepartment] = useState<Department | null>(
     null
   );
-  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [newDepartment, setNewDepartment] = useState<Partial<Department>>({
     name: "",
     contentHtml: "",
@@ -203,11 +199,6 @@ export function DepartmentsManagement() {
     return html.replace(/<[^>]*>/g, "");
   };
 
-  const handleTemplateSelect = (content: string) => {
-    setNewDepartment({ ...newDepartment, contentHtml: content });
-    setShowTemplateSelector(false);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -220,110 +211,89 @@ export function DepartmentsManagement() {
             Quản lý thông tin các khoa, chuyên môn và mô tả dịch vụ y tế.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Dialog
-            open={showTemplateSelector}
-            onOpenChange={setShowTemplateSelector}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Wand2 className="h-4 w-4 mr-2" />
-                Mẫu có sẵn
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Chọn mẫu chuyên khoa</DialogTitle>
-              </DialogHeader>
-              <TemplateSelector onSelectTemplate={handleTemplateSelect} />
-            </DialogContent>
-          </Dialog>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm chuyên khoa
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Thêm chuyên khoa mới</DialogTitle>
+              <DialogDescription>
+                Tạo chuyên khoa mới với editor trực quan. Chọn mẫu có sẵn để bắt
+                đầu nhanh!
+              </DialogDescription>
+            </DialogHeader>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+                <TabsTrigger value="content">Nội dung mô tả</TabsTrigger>
+              </TabsList>
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Tên chuyên khoa *</Label>
+                    <Input
+                      id="name"
+                      value={newDepartment.name || ""}
+                      onChange={(e) =>
+                        setNewDepartment({
+                          ...newDepartment,
+                          name: e.target.value,
+                        })
+                      }
+                      placeholder="Ví dụ: Tim mạch, Nhi khoa, Cấp cứu..."
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="status">Trạng thái</Label>
+                    <Select
+                      value={newDepartment.status}
+                      onValueChange={(value) =>
+                        setNewDepartment({
+                          ...newDepartment,
+                          status: value as Department["status"],
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                        <SelectItem value="INACTIVE">
+                          Ngừng hoạt động
+                        </SelectItem>
+                        <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="content" className="space-y-4">
+                <TiptapEditor
+                  value={newDepartment.contentHtml || ""}
+                  onChange={(content) =>
+                    setNewDepartment({ ...newDepartment, contentHtml: content })
+                  }
+                  height={400}
+                  placeholder="Bắt đầu viết mô tả về chuyên khoa..."
+                  templateCategories={["Chuyên khoa"]} // Chỉ hiển thị templates cho chuyên khoa
+                />
+              </TabsContent>
+            </Tabs>
+            <DialogFooter>
+              <Button
+                onClick={handleAddDepartment}
+                disabled={!newDepartment.name || !newDepartment.contentHtml}
+              >
                 Thêm chuyên khoa
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Thêm chuyên khoa mới</DialogTitle>
-                <DialogDescription>
-                  Tạo chuyên khoa mới với editor trực quan. Không cần biết HTML!
-                </DialogDescription>
-              </DialogHeader>
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
-                  <TabsTrigger value="content">Nội dung mô tả</TabsTrigger>
-                </TabsList>
-                <TabsContent value="basic" className="space-y-4">
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="name">Tên chuyên khoa *</Label>
-                      <Input
-                        id="name"
-                        value={newDepartment.name || ""}
-                        onChange={(e) =>
-                          setNewDepartment({
-                            ...newDepartment,
-                            name: e.target.value,
-                          })
-                        }
-                        placeholder="Ví dụ: Tim mạch, Nhi khoa, Cấp cứu..."
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="status">Trạng thái</Label>
-                      <Select
-                        value={newDepartment.status}
-                        onValueChange={(value) =>
-                          setNewDepartment({
-                            ...newDepartment,
-                            status: value as Department["status"],
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                          <SelectItem value="INACTIVE">
-                            Ngừng hoạt động
-                          </SelectItem>
-                          <SelectItem value="HIDDEN">Ẩn</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="content" className="space-y-4">
-                  {/* <WysiwygEditor
-                    value={newDepartment.contentHtml || ""}
-                    onChange={(content) =>
-                      setNewDepartment({
-                        ...newDepartment,
-                        contentHtml: content,
-                      })
-                    }
-                    height={400}
-                    placeholder="Bắt đầu viết mô tả về chuyên khoa..."
-                  /> */}
-                  <Editor />
-                </TabsContent>
-              </Tabs>
-              <DialogFooter>
-                <Button
-                  onClick={handleAddDepartment}
-                  disabled={!newDepartment.name || !newDepartment.contentHtml}
-                >
-                  Thêm chuyên khoa
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -607,7 +577,7 @@ export function DepartmentsManagement() {
                 </div>
               </TabsContent>
               <TabsContent value="content" className="space-y-4">
-                <WysiwygEditor
+                <TiptapEditor
                   value={editingDepartment.contentHtml}
                   onChange={(content) =>
                     setEditingDepartment({
@@ -617,6 +587,7 @@ export function DepartmentsManagement() {
                   }
                   height={400}
                   placeholder="Chỉnh sửa mô tả chuyên khoa..."
+                  templateCategories={["Chuyên khoa"]} // Chỉ hiển thị templates cho chuyên khoa
                 />
               </TabsContent>
             </Tabs>
