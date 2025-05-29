@@ -20,6 +20,11 @@ const segmentMap: Record<string, string> = {
   admin: "Quản trị",
   doctors: "Bác sĩ",
   departments: "Chuyên khoa",
+  positions: "Chức vụ",
+  titles: "Chức danh",
+  staff: "Nhân viên",
+  services: "Dịch vụ",
+  news: "Tin tức",
   edit: "Chỉnh sửa",
   // ...
 };
