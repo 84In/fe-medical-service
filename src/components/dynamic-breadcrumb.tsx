@@ -41,10 +41,11 @@ export default function DynamicBreadcrumb() {
 
           return (
             <div key={href} className="flex items-center">
+              {/* Hiển thị dấu phân cách nếu không phải phần đầu tiên */}
               {index > 0 && <BreadcrumbSeparator />}
               <BreadcrumbItem>
                 {isLast ? (
-                  <BreadcrumbPage>
+                  <BreadcrumbPage className="font-semibold">
                     {capitalize(getSegmentName(segment))}
                   </BreadcrumbPage>
                 ) : (
