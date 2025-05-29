@@ -82,14 +82,17 @@ const mockDepartments: Department[] = [
   },
 ];
 
+// Interface cho Next.js 15 - params là Promise
 interface DepartmentPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function DepartmentPage({ params }: DepartmentPageProps) {
-  const departmentId = Number.parseInt(params.id);
+  // Await params để lấy giá trị
+  const { id } = await params;
+  const departmentId = Number.parseInt(id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
   if (!department) {
@@ -100,7 +103,9 @@ export default async function DepartmentPage({ params }: DepartmentPageProps) {
 }
 
 export async function generateMetadata({ params }: DepartmentPageProps) {
-  const departmentId = Number.parseInt(params.id);
+  // Await params để lấy giá trị
+  const { id } = await params;
+  const departmentId = Number.parseInt(id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
   if (!department) {
