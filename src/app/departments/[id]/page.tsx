@@ -82,13 +82,11 @@ const mockDepartments: Department[] = [
   },
 ];
 
-interface DepartmentPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function DepartmentPage({ params }: DepartmentPageProps) {
+export default async function DepartmentPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const departmentId = Number.parseInt(params.id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
@@ -99,7 +97,7 @@ export default async function DepartmentPage({ params }: DepartmentPageProps) {
   return <DepartmentDetail department={department} />;
 }
 
-export async function generateMetadata({ params }: DepartmentPageProps) {
+export async function generateMetadata({ params }: { params: { id: string } }) {
   const departmentId = Number.parseInt(params.id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
@@ -116,7 +114,6 @@ export async function generateMetadata({ params }: DepartmentPageProps) {
   };
 }
 
-// Generate static params for better performance
 export async function generateStaticParams() {
   return mockDepartments.map((department) => ({
     id: department.id.toString(),
