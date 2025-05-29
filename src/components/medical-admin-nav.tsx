@@ -26,10 +26,13 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
+  FileType2,
   HelpCircle,
   Home,
+  Hospital,
   LogOut,
   Menu,
+  Newspaper,
   Search,
   Settings,
   Shield,
@@ -37,13 +40,10 @@ import {
   User,
   UserCheck,
   Users,
-  Hospital,
   X,
-  Newspaper,
-  FileType2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface NavItem {
   title: string;
@@ -86,13 +86,13 @@ const navigationItems: NavItem[] = [
         href: "/admin/doctors/departments",
       },
       {
-        title: "Chức danh",
-        icon: <UserCheck className="h-4 w-4" />,
+        title: "Chức vụ",
+        icon: <Building2 className="h-4 w-4" />,
         href: "/admin/doctors/positions",
       },
       {
-        title: "Chức vụ",
-        icon: <Building2 className="h-4 w-4" />,
+        title: "Chức danh",
+        icon: <UserCheck className="h-4 w-4" />,
         href: "/admin/doctors/titles",
       },
     ],

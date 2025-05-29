@@ -1,6 +1,6 @@
-import { DepartmentDetail } from "@/components/department-detail";
 import { notFound } from "next/navigation";
 import type { Department } from "@/types/doctor";
+import DepartmentDetailClient from "./DepartmentDetailClient";
 
 // Mock data - trong thực tế sẽ fetch từ API
 const mockDepartments: Department[] = [
@@ -65,18 +65,31 @@ const mockDepartments: Department[] = [
     name: "Cấp cứu",
     contentHtml: `
       <h2>Khoa Cấp cứu - Sẵn sàng 24/7</h2>
-      <p>Khoa Cấp cứu của VitaCare Medical hoạt động 24/7, sẵn sàng tiếp nhận và xử lý các trường hợp cấp cứu, chấn thương và các tình huống y tế khẩn cấp.</p>
+      <p>Khoa Cấp cứu của VitaCare Medical hoạt động 24/7, sẵn sàng tiếp nhận và xử lý các trường hợp cấp cứu, chấn thương và các tình huống y tế khẩn cấp với tốc độ nhanh nhất và chất lượng cao nhất.</p>
 
       <h3>Dịch vụ cấp cứu</h3>
       <ul>
-        <li>Cấp cứu tim mạch</li>
-        <li>Cấp cứu hô hấp</li>
-        <li>Xử lý chấn thương</li>
-        <li>Cấp cứu sản khoa</li>
-        <li>Cấp cứu nhi khoa</li>
+        <li><strong>Cấp cứu tim mạch:</strong> Xử lý đột quỵ, nhồi máu cơ tim</li>
+        <li><strong>Cấp cứu hô hấp:</strong> Khó thở, ngừng thở</li>
+        <li><strong>Xử lý chấn thương:</strong> Tai nạn giao thông, chấn thương</li>
+        <li><strong>Cấp cứu sản khoa:</strong> Sinh non, biến chứng thai sản</li>
+        <li><strong>Cấp cứu nhi khoa:</strong> Trẻ em cấp cứu</li>
       </ul>
 
-      <p><strong>Hotline cấp cứu: 115</strong></p>
+      <h3>Trang thiết bị cấp cứu</h3>
+      <ul>
+        <li>Xe cấp cứu hiện đại với đầy đủ thiết bị</li>
+        <li>Phòng cấp cứu được trang bị máy thở, máy sốc tim</li>
+        <li>Hệ thống theo dõi bệnh nhân liên tục</li>
+        <li>Phòng mổ cấp cứu sẵn sàng 24/7</li>
+      </ul>
+
+      <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 16px 0;">
+        <h3 style="color: #dc2626; margin-top: 0;">Liên hệ cấp cứu</h3>
+        <p style="margin-bottom: 0;"><strong style="font-size: 18px; color: #dc2626;">Hotline cấp cứu: 115</strong><br>
+        <strong>Địa chỉ:</strong> 123 Đường ABC, Quận 1, TP.HCM<br>
+        <strong>Thời gian:</strong> 24/7 - Tất cả các ngày trong tuần</p>
+      </div>
     `,
     status: "ACTIVE",
   },
@@ -99,7 +112,7 @@ export default async function DepartmentPage({ params }: DepartmentPageProps) {
     notFound();
   }
 
-  return <DepartmentDetail department={department} />;
+  return <DepartmentDetailClient department={department} />;
 }
 
 export async function generateMetadata({ params }: DepartmentPageProps) {
