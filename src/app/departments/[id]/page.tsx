@@ -88,7 +88,7 @@ interface DepartmentPageProps {
   };
 }
 
-export default function DepartmentPage({ params }: DepartmentPageProps) {
+export default async function DepartmentPage({ params }: DepartmentPageProps) {
   const departmentId = Number.parseInt(params.id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
