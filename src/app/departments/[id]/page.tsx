@@ -82,12 +82,17 @@ const mockDepartments: Department[] = [
   },
 ];
 
-export default async function DepartmentPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const departmentId = Number.parseInt(params.id);
+// Interface cho Next.js 15 - params là Promise
+interface DepartmentPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default async function DepartmentPage({ params }: DepartmentPageProps) {
+  // Await params để lấy giá trị
+  const { id } = await params;
+  const departmentId = Number.parseInt(id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
   if (!department) {
@@ -97,8 +102,10 @@ export default async function DepartmentPage({
   return <DepartmentDetail department={department} />;
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const departmentId = Number.parseInt(params.id);
+export async function generateMetadata({ params }: DepartmentPageProps) {
+  // Await params để lấy giá trị
+  const { id } = await params;
+  const departmentId = Number.parseInt(id);
   const department = mockDepartments.find((d) => d.id === departmentId);
 
   if (!department) {
@@ -114,6 +121,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
+// Generate static params for better performance
 export async function generateStaticParams() {
   return mockDepartments.map((department) => ({
     id: department.id.toString(),
