@@ -98,14 +98,6 @@ function DoctorsErrorFallback() {
 export default function DoctorsClientPage() {
   return (
     <div className="px-6 pb-8">
-      {/* Page Header - Optional additional context */}
-      {/* <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <Stethoscope className="h-4 w-4" />
-          <span>Quản lý thông tin bác sĩ và nhân sự y tế</span>
-        </div>
-      </div> */}
-
       {/* Main Content with Error Boundary and Loading */}
       <Suspense fallback={<DoctorsLoadingSkeleton />}>
         <div className="space-y-6">
