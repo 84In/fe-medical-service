@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-Atomics;
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,6 +25,7 @@ const segmentMap: Record<string, string> = {
   services: "Dịch vụ",
   news: "Tin tức",
   edit: "Chỉnh sửa",
+  "service-types": "Loại dịch vụ",
   // ...
 };
 

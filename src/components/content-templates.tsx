@@ -268,6 +268,124 @@ Email: info@vitacare.com</p>`,
     preview: "Mẫu chuẩn cho mô tả dịch vụ y tế",
     tags: ["dịch vụ", "y tế", "cơ bản"],
   },
+  {
+    id: "comprehensive-health-checkup",
+    name: "Khám sức khỏe tổng quát",
+    description: "Mẫu chi tiết cho dịch vụ khám sức khỏe tổng quát",
+    category: "Dịch vụ",
+    content: `<h2>Khám sức khỏe tổng quát</h2>
+<p>
+  Gói khám sức khỏe tổng quát tại <strong>Bệnh viện VitaCare</strong> được xây dựng nhằm giúp khách hàng đánh giá toàn diện tình trạng sức khỏe hiện tại, phát hiện sớm các nguy cơ tiềm ẩn và có hướng điều trị kịp thời.
+</p>
+
+<p>
+  <strong>Đối tượng phù hợp:</strong> Người từ 18 tuổi trở lên, người có tiền sử bệnh lý trong gia đình, hoặc làm việc trong môi trường áp lực, độc hại.<br/>
+  <strong>Thời gian thực hiện:</strong> Khoảng 2–3 giờ<br/>
+  <strong>Chi phí:</strong> Từ 1.500.000 VNĐ đến 3.000.000 VNĐ<br/>
+  <strong>Địa điểm:</strong> Bệnh viện VitaCare – 123 Đường ABC, Quận 1, TP. Hồ Chí Minh.
+</p>
+
+<h3>Dịch vụ bao gồm:</h3>
+<ul>
+  <li>Khám lâm sàng toàn diện</li>
+  <li>Xét nghiệm máu và sinh hoá cơ bản</li>
+  <li>Phân tích nước tiểu</li>
+  <li>Siêu âm ổ bụng tổng quát</li>
+  <li>Đo điện tâm đồ (ECG)</li>
+</ul>
+
+<h3>Đội ngũ chuyên gia</h3>
+<p>
+  Được dẫn dắt bởi các bác sĩ đầu ngành giàu kinh nghiệm trong lĩnh vực tầm soát và phát hiện sớm bệnh lý.
+</p>
+
+<h3>Trang thiết bị hiện đại</h3>
+<ul>
+  <li>Máy siêu âm 4D độ phân giải cao</li>
+  <li>Hệ thống xét nghiệm tự động</li>
+  <li>Thiết bị đo điện tim, huyết áp tiên tiến</li>
+</ul>
+
+<p><em>Để được tư vấn hoặc đặt lịch khám, vui lòng liên hệ hotline: <strong>1900-1234</strong></em></p>`,
+    preview: "Mẫu chi tiết cho dịch vụ khám sức khỏe tổng quát",
+    tags: ["khám tổng quát", "sức khỏe", "tầm soát"],
+  },
+  {
+    id: "diagnostic-imaging",
+    name: "Chẩn đoán hình ảnh",
+    description: "Mẫu cho các dịch vụ chẩn đoán hình ảnh",
+    category: "Dịch vụ",
+    content: `<h2>[Tên dịch vụ chẩn đoán hình ảnh]</h2>
+<p>
+  Dịch vụ chẩn đoán hình ảnh tại VitaCare Medical sử dụng công nghệ hiện đại nhất, giúp chẩn đoán chính xác các bệnh lý.
+</p>
+
+<h3>Các loại chẩn đoán</h3>
+<ul>
+  <li>Siêu âm tổng quát</li>
+  <li>Chụp X-quang</li>
+  <li>Chụp CT Scanner</li>
+  <li>Chụp MRI</li>
+  <li>Nội soi</li>
+</ul>
+
+<h3>Ưu điểm vượt trội</h3>
+<ul>
+  <li>Công nghệ hiện đại, hình ảnh rõ nét</li>
+  <li>Thời gian thực hiện nhanh chóng</li>
+  <li>Đội ngũ kỹ thuật viên chuyên nghiệp</li>
+  <li>Kết quả chính xác, đáng tin cậy</li>
+</ul>
+
+<h3>Quy trình thực hiện</h3>
+<ol>
+  <li>Đăng ký và tư vấn</li>
+  <li>Chuẩn bị theo hướng dẫn</li>
+  <li>Thực hiện chẩn đoán</li>
+  <li>Nhận kết quả và tư vấn</li>
+</ol>
+
+<p><em>Đặt lịch: <strong>1900-1234</strong></em></p>`,
+    preview: "Mẫu cho các dịch vụ chẩn đoán hình ảnh",
+    tags: ["chẩn đoán", "hình ảnh", "siêu âm", "CT", "MRI"],
+  },
+  {
+    id: "laboratory-testing",
+    name: "Xét nghiệm y tế",
+    description: "Mẫu cho các dịch vụ xét nghiệm",
+    category: "Dịch vụ",
+    content: `<h2>Dịch vụ xét nghiệm y tế</h2>
+<p>
+  Phòng xét nghiệm VitaCare Medical được trang bị hệ thống máy móc hiện đại, đảm bảo kết quả chính xác và nhanh chóng.
+</p>
+
+<h3>Các loại xét nghiệm</h3>
+<ul>
+  <li><strong>Xét nghiệm máu:</strong> Công thức máu, sinh hóa máu, đông máu</li>
+  <li><strong>Xét nghiệm nước tiểu:</strong> Tổng phân tích nước tiểu, vi khuẩn</li>
+  <li><strong>Xét nghiệm phân:</strong> Ký sinh trùng, vi khuẩn</li>
+  <li><strong>Xét nghiệm hormone:</strong> Tuyến giáp, sinh dục, stress</li>
+  <li><strong>Xét nghiệm miễn dịch:</strong> Kháng thể, dị ứng</li>
+</ul>
+
+<h3>Thời gian có kết quả</h3>
+<ul>
+  <li>Xét nghiệm cơ bản: 2-4 giờ</li>
+  <li>Xét nghiệm chuyên sâu: 1-3 ngày</li>
+  <li>Xét nghiệm đặc biệt: 3-7 ngày</li>
+</ul>
+
+<h3>Hướng dẫn chuẩn bị</h3>
+<ul>
+  <li>Nhịn ăn 8-12 giờ (đối với một số xét nghiệm)</li>
+  <li>Uống đủ nước trước khi xét nghiệm nước tiểu</li>
+  <li>Thông báo các thuốc đang sử dụng</li>
+</ul>
+
+<p><em>Liên hệ tư vấn: <strong>1900-1234</strong></em></p>`,
+    preview: "Mẫu cho các dịch vụ xét nghiệm y tế",
+    tags: ["xét nghiệm", "máu", "nước tiểu", "hormone"],
+  },
 ];
 
 interface ContentTemplatesProps {
