@@ -21,7 +21,7 @@ const segmentMap: Record<string, string> = {
   doctors: "Bác sĩ",
   departments: "Chuyên khoa",
   positions: "Chức vụ",
-  titles: "Chức danh",
+  titles: "Chức vụ",
   staff: "Nhân viên",
   services: "Dịch vụ",
   news: "Tin tức",

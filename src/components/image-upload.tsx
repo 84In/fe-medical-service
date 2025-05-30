@@ -13,17 +13,19 @@ interface ImageUploadProps {
   maxSize?: number; // MB
   accept?: string;
   className?: string;
+  initialImage?: string;
 }
 
 export function ImageUpload({
   onImageSelect,
   maxSize = 5,
   accept = "image/*",
+  initialImage,
   className,
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialImage || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (file: File) => {
