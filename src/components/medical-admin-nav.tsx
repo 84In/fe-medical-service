@@ -15,7 +15,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -27,17 +26,13 @@ import {
   ClipboardList,
   FileText,
   FileType2,
-  HelpCircle,
   Home,
   Hospital,
   LogOut,
   Menu,
   Newspaper,
   Search,
-  Settings,
-  Shield,
   Stethoscope,
-  User,
   UserCheck,
   Users,
   X,
@@ -63,23 +58,12 @@ const navigationItems: NavItem[] = [
     title: "Quản lý bác sĩ",
     icon: <Users className="h-5 w-5" />,
     href: "/admin/doctors",
-    badge: "1,247",
     children: [
       {
         title: "Tất cả bác sĩ",
         icon: <Users className="h-4 w-4" />,
         href: "/admin/doctors",
       },
-      //   {
-      //     title: "Tạo mới bác sĩ",
-      //     icon: <UserPlus className="h-4 w-4" />,
-      //     href: "/admin/doctors/new",
-      //   },
-      //   {
-      //     title: "doctor Records",
-      //     icon: <FileText className="h-4 w-4" />,
-      //     href: "/admin/doctors/records",
-      //   },
       {
         title: "Chuyên khoa",
         icon: <Stethoscope className="h-4 w-4" />,
@@ -101,7 +85,6 @@ const navigationItems: NavItem[] = [
     title: "Quản lý dịch vụ",
     icon: <Hospital className="h-5 w-5" />,
     href: "/admin/services",
-    badge: "28",
     children: [
       {
         title: "Tất cả dịch vụ",
@@ -119,7 +102,6 @@ const navigationItems: NavItem[] = [
     title: "Quản lý tin tức",
     icon: <FileText className="h-5 w-5" />,
     href: "/admin/news",
-    badge: "28",
     children: [
       {
         title: "Tất cả tin tức",
@@ -129,7 +111,7 @@ const navigationItems: NavItem[] = [
       {
         title: "Danh mục tin tức",
         icon: <FileType2 className="h-4 w-4" />,
-        href: "/admin/news/news-categories",
+        href: "/admin/news/news-types",
       },
     ],
   },
@@ -137,49 +119,6 @@ const navigationItems: NavItem[] = [
     title: "Nhân viên",
     icon: <UserCheck className="h-5 w-5" />,
     href: "/admin/staff",
-
-    // children: [
-    //   {
-    //     title: "Nhân viên quản trị",
-    //     icon: <Users className="h-4 w-4" />,
-    //     href: "/admin/staff/admin",
-
-    // Content Manager
-    // Nhân viên quản lý nội dung
-    //   },
-    //   {
-    //     title: "Kiểm duyệt viên",
-    //     icon: <ShieldCheck className="h-4 w-4" />,
-    //     href: "/admin/staff/shield-check",
-    //   },
-    // ],
-  },
-  {
-    title: "Cài đặt hệ thống",
-    icon: <Settings className="h-5 w-5" />,
-    href: "/admin/settings",
-    children: [
-      {
-        title: "General Settings",
-        icon: <Settings className="h-4 w-4" />,
-        href: "/admin/settings/general",
-      },
-      {
-        title: "User Permissions",
-        icon: <Shield className="h-4 w-4" />,
-        href: "/admin/settings/permissions",
-      },
-      {
-        title: "System Configuration",
-        icon: <Settings className="h-4 w-4" />,
-        href: "/admin/settings/system",
-      },
-      {
-        title: "Backup & Security",
-        icon: <Shield className="h-4 w-4" />,
-        href: "/admin/settings/security",
-      },
-    ],
   },
 ];
 
@@ -239,6 +178,10 @@ export function MedicalAdminNav() {
     }
   }, [pathname]);
 
+  const handleLogout = () => {
+    alert("Logout");
+  };
+
   return (
     <>
       {/* Mobile Menu Button */}
@@ -293,23 +236,9 @@ export function MedicalAdminNav() {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  <span>Help</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>Đăng xuất</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -440,50 +369,17 @@ export function MedicalAdminNav() {
         </nav>
 
         {/* Footer - Profile Section */}
-        <div className="border-t border-gray-200 p-4 flex-shrink-0 mt-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-left"
-              >
-                <div className="flex flex-col items-start w-full">
-                  <span className="text-sm font-medium text-gray-900">
-                    Admin
-                  </span>
-                  <span className="text-xs text-gray-500">Quản trị viên</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    admin@gmail.com
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Help & Support</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex border-t border-gray-200  p-4 flex-shrink-0 mt-auto">
+          <div className="flex flex-col items-start w-full">
+            <span className="text-lg font-medium text-gray-900">Admin</span>
+            <span className="text-xs text-gray-500">Quản trị viên</span>
+          </div>
+          <div
+            onClick={handleLogout}
+            className="flex px-4 py-2 justify-center rounded-md border-none items-center hover:bg-gray-800 hover:text-gray-200 text-gray-700"
+          >
+            <LogOut className="mr-2 h-6 w-6" />
+          </div>
         </div>
       </div>
 
