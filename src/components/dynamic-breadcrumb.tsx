@@ -12,7 +12,11 @@ import {
 } from "@/components/ui/breadcrumb";
 
 function capitalize(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, " ");
+  return str
+    .replace(/-/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 const segmentMap: Record<string, string> = {
@@ -26,6 +30,7 @@ const segmentMap: Record<string, string> = {
   news: "Tin tức",
   edit: "Chỉnh sửa",
   "service-types": "Loại dịch vụ",
+  "news-types": "Loại tin tức",
   // ...
 };
 
