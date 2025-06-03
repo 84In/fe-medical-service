@@ -1,4 +1,4 @@
-import { NewsManagement } from "@/components/news-management";
+import { NewsManagement } from "@/components/admin/news/news-management";
 
 export const metadata = {
   title: "Quản lý tin tức - VitaCare Medical",

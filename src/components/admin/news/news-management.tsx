@@ -51,8 +51,8 @@ import {
   Clock,
   Users,
 } from "lucide-react";
-import { TiptapEditor } from "./tiptap-editor";
-import { ImageUpload } from "./image-upload";
+import { TiptapEditor } from "../tiptap-editor";
+import { ImageUpload } from "../../image-upload";
 import type { News, NewsType } from "@/types";
 
 // Mock data

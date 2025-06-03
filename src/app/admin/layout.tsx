@@ -1,5 +1,5 @@
-import DynamicBreadcrumb from "@/components/dynamic-breadcrumb";
-import { MedicalAdminNav } from "@/components/medical-admin-nav";
+import DynamicBreadcrumb from "@/components/admin/dynamic-breadcrumb";
+import { MedicalAdminNav } from "@/components/admin/medical-admin-nav";
 
 export const metadata = {
   title: "Admin Dashboard",

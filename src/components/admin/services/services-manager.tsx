@@ -61,10 +61,10 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
-import { TiptapEditor } from "./tiptap-editor";
+import { TiptapEditor } from "../tiptap-editor";
 import type { Service, ServiceType } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ImageUpload } from "./image-upload";
+import { ImageUpload } from "../../image-upload";
 
 // Mock data
 const serviceTypesMock: ServiceType[] = [
