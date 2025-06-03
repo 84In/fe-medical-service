@@ -1,4 +1,4 @@
-import Link from "next/link";
+import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,51 +8,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Heart,
-  Shield,
-  Users,
   ArrowRight,
-  Stethoscope,
   Calendar,
   FileText,
+  Heart,
+  Stethoscope,
+  Users,
 } from "lucide-react";
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white font-[family-name:var(--font-geist-sans)]">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg border border-gray-200 shadow-sm">
-                <Image
-                  src="/logo.png"
-                  alt="VitaCare Medical Logo"
-                  width={60}
-                  height={60}
-                />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  VitaCare Medical
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Chăm sóc tận tâm – Sống khỏe mỗi ngày
-                </p>
-              </div>
-            </div>
-            <Link href="/admin">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Shield className="h-4 w-4 mr-2" />
-                Admin Portal
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <MainLayout>
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
@@ -191,47 +158,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      <section className="bg-blue-600 py-16">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h3 className="text-3xl font-bold text-white mb-4">
-            Sẵn sàng nâng cao hiệu quả quản lý?
-          </h3>
-          <p className="text-xl text-blue-100 mb-8">
-            Bắt đầu sử dụng VitaCare Medical ngay hôm nay và trải nghiệm sự khác
-            biệt.
-          </p>
-          <Link href="/admin">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
-              Bắt đầu ngay
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <Heart className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold">VitaCare Medical</span>
-            </div>
-            <p className="text-gray-400 mb-4 text-lg">
-              Chăm sóc tận tâm – Sống khỏe mỗi ngày
-            </p>
-            <div className="border-t border-gray-800 pt-6">
-              <p className="text-sm text-gray-500">
-                © 2024 VitaCare Medical. Phát triển bởi VASD IT Team.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+    </MainLayout>
   );
 }

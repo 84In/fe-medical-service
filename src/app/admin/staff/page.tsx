@@ -1,4 +1,4 @@
-import { StaffManagement } from "@/components/staff-management";
+import { StaffManagement } from "@/components/admin/staff/staff-management";
 
 export const metadata = {
   title: "Quản lý nhân viên | VitaCare Medical Admin",

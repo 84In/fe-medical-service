@@ -1,6 +1,6 @@
 "use client";
 
-import ServicesManagement from "@/components/services-manager";
+import ServicesManagement from "@/components/admin/services/services-manager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2 } from "lucide-react";
