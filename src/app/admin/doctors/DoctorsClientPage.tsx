@@ -1,6 +1,6 @@
 "use client";
 
-import { DoctorsManagement } from "@/components/doctors-management";
+import { DoctorsManagement } from "@/components/admin/doctors/doctors-management";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Stethoscope } from "lucide-react";

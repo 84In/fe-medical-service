@@ -1,4 +1,4 @@
-import { PositionsManagement } from "@/components/positions-management";
+import { PositionsManagement } from "@/components/admin/doctors/positions-management";
 
 export default function PositionsPage() {
   return (

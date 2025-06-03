@@ -1,4 +1,4 @@
-import ServiceTypesManagement from "@/components/service-types-management";
+import ServiceTypesManagement from "@/components/admin/services/service-types-management";
 
 export default function ServiceTypesPage() {
   return (

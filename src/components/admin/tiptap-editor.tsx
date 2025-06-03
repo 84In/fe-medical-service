@@ -22,8 +22,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ImageUpload } from "./image-upload";
-import { ContentTemplates } from "./content-templates";
+import { ImageUpload } from "@/components/image-upload";
+import { ContentTemplates } from "@/components/admin/content-templates";
 import {
   Bold,
   Italic,

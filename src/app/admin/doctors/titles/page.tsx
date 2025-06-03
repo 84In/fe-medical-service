@@ -1,4 +1,4 @@
-import { TitlesManagement } from "@/components/titles-management";
+import { TitlesManagement } from "@/components/admin/doctors/titles-management";
 
 export default function TitlesPage() {
   return (

@@ -1,7 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import Link from "next/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,6 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { usePathname } from "next/navigation";
 
 function capitalize(str: string) {
   return str

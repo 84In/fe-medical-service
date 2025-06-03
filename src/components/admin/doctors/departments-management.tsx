@@ -61,7 +61,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { Department } from "@/types/doctor";
-import { TiptapEditor } from "./tiptap-editor";
+import { TiptapEditor } from "../tiptap-editor";
 
 // Mock data
 const mockDepartments: Department[] = [
