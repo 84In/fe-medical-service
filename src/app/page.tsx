@@ -12,6 +12,7 @@ import {
   Stethoscope,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -60,23 +61,25 @@ export default function Home() {
             </div>
 
             <div className="space-y-4 mb-6">
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Users className="h-6 w-6 text-blue-600" />
+              <Link href={"/dich-vu/kham-tong-quat-1"}>
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Users className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2">
+                          Khám tổng quát
+                        </h4>
+                        <p className="text-gray-600 text-sm">
+                          Khám sức khỏe định kỳ và tầm soát bệnh lý
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-2">
-                        Khám tổng quát
-                      </h4>
-                      <p className="text-gray-600 text-sm">
-                        Khám sức khỏe định kỳ và tầm soát bệnh lý
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
@@ -133,7 +136,7 @@ export default function Home() {
               </Card>
             </div>
 
-            <div>
+            <Link href={"/dich-vu"} passHref>
               <button className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center">
                 Xem tất cả dịch vụ
                 <svg
@@ -150,7 +153,7 @@ export default function Home() {
                   />
                 </svg>
               </button>
-            </div>
+            </Link>
           </div>
 
           {/* News Column */}
@@ -239,7 +242,7 @@ export default function Home() {
               </Card>
             </div>
 
-            <div>
+            <Link href={"/tin-tuc"}>
               <button className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center">
                 Xem tất cả tin tức
                 <svg
@@ -256,7 +259,7 @@ export default function Home() {
                   />
                 </svg>
               </button>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

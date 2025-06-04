@@ -26,35 +26,36 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronRight, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { toSlug } from "@/utils/slugify";
 const services = [
   {
     title: "Khám sức khỏe tổng quát",
-    href: "/dich-vu/kham-tong-quat",
+    href: "/dich-vu/loai/kham-tong-quat-1",
     description: "Khám sức khỏe định kỳ và tầm soát bệnh lý",
   },
   {
     title: "Tầm soát ung thư",
-    href: "/dich-vu/tam-soat-ung-thu",
+    href: "/dich-vu/loai/tam-soat-ung-thu-2",
     description: "Phát hiện sớm các dấu hiệu ung thư",
   },
   {
     title: "Chẩn đoán hình ảnh",
-    href: "/dich-vu/chan-doan-hinh-anh",
+    href: "/dich-vu/loai/chan-doan-hinh-anh-3",
     description: "X-quang, CT, MRI, siêu âm",
   },
   {
     title: "Xét nghiệm",
-    href: "/dich-vu/xet-nghiem",
+    href: "/dich-vu/loai/xet-nghiem-4",
     description: "Xét nghiệm máu, nước tiểu, sinh hóa",
   },
   {
     title: "Khám chuyên khoa",
-    href: "/dich-vu/kham-chuyen-khoa",
+    href: "/dich-vu/loai/kham-chuyen-khoa-5",
     description: "Khám và điều trị các bệnh chuyên khoa",
   },
   {
     title: "Gói khám VIP",
-    href: "/dich-vu/goi-kham-vip",
+    href: "/dich-vu/loai/goi-kham-vip-6",
     description: "Dịch vụ khám cao cấp với tiện ích đặc biệt",
   },
 ];
@@ -221,6 +222,15 @@ function MobileMenuItem({
         )}
       </CollapsibleTrigger>
       <CollapsibleContent className="bg-gray-50">
+        <Link
+          href={`/${toSlug(title)}`}
+          className="block px-8 py-3 text-sm text-gray-600 hover:bg-white hover:text-gray-900 border-b border-gray-100 last:border-b-0 transition-colors"
+        >
+          <div className="font-medium">Tất cả {title.toLowerCase()}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Danh sách tất cả {title.toLowerCase()}
+          </div>
+        </Link>
         {items.map((item) => (
           <Link
             key={item.title}
@@ -276,7 +286,7 @@ export default function NavHeader() {
             <NavigationMenuTrigger
               className={cn(
                 "hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900",
-                isCategoryActive(services) &&
+                isActive("/dich-vu") &&
                   "bg-[#4DA9FF]/10 text-[#4DA9FF] font-semibold data-[state=open]:bg-[#4DA9FF]/10 data-[state=open]:text-[#4DA9FF]"
               )}
             >
@@ -284,6 +294,8 @@ export default function NavHeader() {
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                {/* Thêm một NavigationMenuLink */}
+
                 {services.map((service) => (
                   <ListItem
                     key={service.title}
@@ -293,6 +305,14 @@ export default function NavHeader() {
                     {service.description}
                   </ListItem>
                 ))}
+                <li className="col-span-2">
+                  <NavigationMenuLink
+                    className="flex items-center justify-center w-full rounded-md bg-blue-50 p-2 text-blue-700 hover:bg-blue-100"
+                    href="/dich-vu"
+                  >
+                    Xem tất cả dịch vụ
+                  </NavigationMenuLink>
+                </li>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>

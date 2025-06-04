@@ -37,15 +37,15 @@ export default function Header() {
   return (
     <div className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-4">
-        <div className="flex justify-between items-center py-2 lg:py-0">
+        <div className="flex justify-between items-center py-2 lg:py-2">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 lg:gap-3">
             <div className="rounded-lg border border-gray-200 shadow-sm">
               <Image
                 src="/logo.png"
                 alt="VitaCare Medical Logo"
-                width={50}
-                height={50}
+                width={40}
+                height={40}
                 className="lg:w-[60px] lg:h-[60px]"
               />
             </div>
