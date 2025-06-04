@@ -4,6 +4,7 @@
 
 
 
+
 @layer base {
   :root {
 
@@ -236,6 +237,21 @@
 }
 
 @layer utilities {
+    .font-inter {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .font-roboto {
+    font-family: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .font-open-sans {
+    font-family: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .font-poppins {
+    font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  }
   /* Medical-specific utility classes */
   .text-medical-primary {
     color: hsl(var(--medical-primary));
@@ -320,6 +336,24 @@
   }
 }
 
+
+/* Typography styles for different fonts */
+.font-inter {
+  letter-spacing: -0.01em;
+}
+
+.font-roboto {
+  letter-spacing: 0.01em;
+}
+
+.font-open-sans {
+  letter-spacing: 0.02em;
+}
+
+.font-poppins {
+  letter-spacing: 0.01em;
+}
+
 /* Custom medical icons and symbols */
 .medical-icon {
   @apply inline-flex items-center justify-center;
@@ -387,4 +421,38 @@
 
 .loading-spinner {
   @apply animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
+}
+/* Font face declarations from next/font/google */
+:root {
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-roboto: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-open-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-nunito-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-source-sans-3: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-ibm-plex-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Font utility classes */
+.font-inter {
+  font-family: var(--font-inter);
+}
+
+.font-roboto {
+  font-family: var(--font-roboto);
+}
+
+.font-open-sans {
+  font-family: var(--font-open-sans);
+}
+
+.font-nunito-sans {
+  font-family: var(--font-nunito-sans);
+}
+
+.font-source-sans-3 {
+  font-family: var(--font-source-sans-3);
+}
+
+.font-ibm-plex-sans {
+  font-family: var(--font-ibm-plex-sans);
 }

@@ -1,21 +1,57 @@
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+// import {
+//   IBM_Plex_Sans,
+//   Inter,
+//   Nunito_Sans,
+//   Open_Sans,
+//   Roboto,
+//   Source_Sans_3,
+// } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-  display: "swap",
-  preload: true,
-});
+// const inter = Inter({
+//   subsets: ["latin", "vietnamese"],
+//   variable: "--font-inter",
+//   display: "swap",
+// });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin", "vietnamese"],
-  display: "swap",
-  preload: true,
-});
+// // Font Roboto - Hỗ trợ tiếng Việt
+// const roboto = Roboto({
+//   weight: ["300", "400", "500", "700"],
+//   subsets: ["latin"],
+//   variable: "--font-roboto",
+//   display: "swap",
+// });
+
+// // Font Open Sans - Hỗ trợ tiếng Việt
+// const openSans = Open_Sans({
+//   subsets: ["latin"],
+//   variable: "--font-open-sans",
+//   display: "swap",
+// });
+
+// // Font Nunito Sans - Rất tốt cho tiếng Việt
+// const nunitoSans = Nunito_Sans({
+//   subsets: ["latin"],
+//   variable: "--font-nunito-sans",
+//   display: "swap",
+// });
+
+// // Font Source Sans 3 - Hỗ trợ tiếng Việt
+// const sourceSans3 = Source_Sans_3({
+//   subsets: ["latin"],
+//   variable: "--font-source-sans-3",
+//   display: "swap",
+// });
+
+// // Font IBM Plex Sans - Hỗ trợ tiếng Việt
+// const ibmPlexSans = IBM_Plex_Sans({
+//   weight: ["300", "400", "500", "600", "700"],
+//   subsets: ["latin"],
+//   variable: "--font-ibm-plex-sans",
+//   display: "swap",
+// });
 
 export const metadata: Metadata = {
   title: "VitaCare Medical",
@@ -46,7 +82,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="VitaCare Medical" />
       </head>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`font-inter antialiased`}
         suppressHydrationWarning={true}
       >
         {children}
