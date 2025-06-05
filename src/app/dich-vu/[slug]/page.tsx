@@ -271,9 +271,9 @@ export default async function ServiceDetailPage({
   // ... rest of the component remains the same
 
   return (
-    <div className="container mx-auto py-4 px-4 md:px-2">
+    <div className="container mx-auto py-1 pb-4 px-4 md:px-2">
       {/* Breadcrumb */}
-      <nav className="flex items-center text-sm bg-white border border-green-600 py-2 px-2 rounded-md text-gray-500 mb-3">
+      <nav className="flex items-center text-sm bg-white py-2 px-2 rounded-md text-gray-500">
         <Link href="/" className="flex items-center hover:text-blue-600">
           <Home className="h-4 w-4 mr-1" />
           <span>Trang chủ</span>

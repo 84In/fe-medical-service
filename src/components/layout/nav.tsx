@@ -63,32 +63,32 @@ const services = [
 const specialties = [
   {
     title: "Tim mạch",
-    href: "/chuyen-khoa/tim-mach",
+    href: "/chuyen-khoa/tim-mach-1",
     description: "Điều trị các bệnh lý về tim và mạch máu",
   },
   {
     title: "Nhi khoa",
-    href: "/chuyen-khoa/nhi-khoa",
+    href: "/chuyen-khoa/nhi-khoa-2",
     description: "Chăm sóc sức khỏe trẻ em từ 0-16 tuổi",
   },
   {
     title: "Cơ xương khớp",
-    href: "/chuyen-khoa/co-xuong-khop",
+    href: "/chuyen-khoa/co-xuong-khop-3",
     description: "Điều trị các bệnh lý về xương khớp",
   },
   {
     title: "Chẩn đoán hình ảnh",
-    href: "/chuyen-khoa/chan-doan-hinh-anh",
+    href: "/chuyen-khoa/chan-doan-hinh-anh-4",
     description: "Chẩn đoán qua hình ảnh y học",
   },
   {
     title: "Tiêu hóa",
-    href: "/chuyen-khoa/tieu-hoa",
+    href: "/chuyen-khoa/tieu-hoa-5",
     description: "Điều trị các bệnh lý đường tiêu hóa",
   },
   {
     title: "Da liễu",
-    href: "/chuyen-khoa/da-lieu",
+    href: "/chuyen-khoa/da-lieu-6",
     description: "Điều trị các bệnh lý về da",
   },
 ];
@@ -339,6 +339,14 @@ export default function NavHeader() {
                     {specialty.description}
                   </ListItem>
                 ))}
+                <li className="col-span-2">
+                  <NavigationMenuLink
+                    className="flex items-center justify-center w-full rounded-md bg-blue-50 p-2 text-blue-700 hover:bg-blue-100"
+                    href="/chuyen-khoa"
+                  >
+                    Xem tất cả chuyên khoa
+                  </NavigationMenuLink>
+                </li>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
