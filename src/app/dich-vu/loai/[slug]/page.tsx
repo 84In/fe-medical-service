@@ -178,9 +178,9 @@ export default async function ServiceTypePage({
   );
 
   return (
-    <div className="container mx-auto py-4 px-4 md:px-2">
+    <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
-      <nav className="flex items-center px-2 text-sm bg-white border border-green-600 py-2 rounded-md text-gray-500 mb-3">
+      <nav className="flex items-center text-sm bg-white py-2 px-2 rounded-md text-gray-500">
         <Link href="/" className="flex items-center hover:text-blue-600">
           <Home className="h-4 w-4 mr-1" />
           <span>Trang chủ</span>
@@ -194,7 +194,7 @@ export default async function ServiceTypePage({
       </nav>
 
       {/* Hero section */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl overflow-hidden mb-8">
+      <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 overflow-hidden mb-8">
         <div className="absolute inset-0 bg-[url('/placeholder.svg?height=400&width=1200')] opacity-20 bg-cover bg-center"></div>
         <div className="relative p-4 md:p-8 text-white">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
@@ -216,7 +216,7 @@ export default async function ServiceTypePage({
       </div>
 
       {/* Services list */}
-      <div className="mb-12">
+      <div className="mb-12 mx-auto py-4 px-4 md:px-6">
         <h2 className="text-2xl font-bold mb-6">
           Danh sách dịch vụ {serviceType.name.toLowerCase()}
         </h2>
