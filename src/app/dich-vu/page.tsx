@@ -153,8 +153,8 @@ export default function ServicesPage() {
   });
 
   return (
-    <div className="container mx-auto py-4 px-4 md:px-6">
-      <nav className="flex items-center px-2 text-sm bg-white border border-green-600 py-2 rounded-md text-gray-500 mb-3">
+    <div className="min-h-screen bg-gray-50">
+      <nav className="flex items-center text-sm bg-white py-2 px-2 rounded-md text-gray-500">
         <Link href="/" className="flex items-center hover:text-blue-600">
           <Home className="h-4 w-4 mr-1" />
           <span>Trang chủ</span>
@@ -163,7 +163,7 @@ export default function ServicesPage() {
         <span className="text-gray-900 font-medium">Dịch vụ</span>
       </nav>
       {/* Hero section */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl overflow-hidden mb-12">
+      <div className="relative bg-gradient-to-r from-blue-600 to-blue-800  overflow-hidden mb-12">
         <div className="absolute inset-0 bg-[url('/placeholder.svg?height=400&width=1200')] opacity-20 bg-cover bg-center"></div>
         <div className="relative p-8 md:p-12 text-white">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Dịch vụ y tế</h1>
@@ -191,7 +191,7 @@ export default function ServicesPage() {
       </div>
 
       {/* Tabs for service types */}
-      <Tabs defaultValue="all" className="mb-12">
+      <Tabs defaultValue="all" className="mb-12 mx-auto py-4 px-4 md:px-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Danh mục dịch vụ</h2>
           <TabsList className="hidden md:flex">

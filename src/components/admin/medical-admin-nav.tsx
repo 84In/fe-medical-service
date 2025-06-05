@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface NavItem {
   title: string;
@@ -200,7 +201,10 @@ export function MedicalAdminNav() {
                 <Menu className="h-5 w-5" />
               )}
             </Button>
-            <div className="flex items-center gap-2">
+            <Link
+              href={"/"}
+              className="flex items-center gap-2 hover:cursor-pointer"
+            >
               <div className="border border-gray-400 rounded-full">
                 <Image
                   src="/logo.png"
@@ -211,7 +215,7 @@ export function MedicalAdminNav() {
                 />
               </div>
               <span className="font-bold text-gray-900">VitaCare Medical</span>
-            </div>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -253,7 +257,10 @@ export function MedicalAdminNav() {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-200 flex-shrink-0">
+        <Link
+          href={"/"}
+          className="flex items-center gap-3 hover:cursor-pointer px-6 py-4 border-b border-gray-200 flex-shrink-0"
+        >
           <div className="border border-gray-400 rounded-full">
             <Image
               src="/logo.png"
@@ -271,7 +278,7 @@ export function MedicalAdminNav() {
             <h1 className="font-bold text-gray-900">VitaCare Medical</h1>
             <p className="text-xs text-gray-500">Cổng thông tin quản trị</p>
           </div>
-        </div>
+        </Link>
 
         {/* Search */}
         <div className="p-4 border-b border-gray-200 flex-shrink-0">
