@@ -273,30 +273,36 @@ export default async function ServiceDetailPage({
   return (
     <div className="container mx-auto py-1 pb-4 px-4 md:px-2">
       {/* Breadcrumb */}
-      <nav className="flex items-center text-sm bg-white py-2 px-2 rounded-md text-gray-500">
-        <Link href="/" className="flex items-center hover:text-blue-600">
-          <Home className="h-4 w-4 mr-1" />
-          <span>Trang chủ</span>
-        </Link>
-        <ChevronRight className="h-4 w-4 mx-2" />
-        <span className="hidden md:inline-flex items-center">
-          <Link href="/dich-vu" className="hover:text-blue-600">
-            Dịch vụ
-          </Link>
-          <ChevronRight className="h-4 w-4 mx-2" />
-          <Link
-            href={`/dich-vu/loai/${toSlug(service.serviceType.name)}-${
-              service.serviceType.id
-            }`}
-            className="hover:text-blue-600"
-          >
-            {service.serviceType.name}
-          </Link>
-          <ChevronRight className="h-4 w-4 mx-2" />
-        </span>
-        <span className="text-gray-900 font-medium">{service.name}</span>
-      </nav>
-
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Link
+              href="/"
+              className="flex items-center justify-center hover:text-blue-600"
+            >
+              <Home className="h-4 w-4 mr-1" />
+              <span>Trang chủ</span>
+            </Link>
+            <ChevronRight className="h-4 w-4 mx-2" />
+            <span className="hidden md:inline-flex items-center">
+              <Link href="/dich-vu" className="hover:text-blue-600">
+                Dịch vụ
+              </Link>
+              <ChevronRight className="h-4 w-4 mx-2" />
+              <Link
+                href={`/dich-vu/loai/${toSlug(service.serviceType.name)}-${
+                  service.serviceType.id
+                }`}
+                className="hover:text-blue-600"
+              >
+                {service.serviceType.name}
+              </Link>
+              <ChevronRight className="h-4 w-4 mx-2" />
+            </span>
+            <span className="text-gray-900 font-medium">{service.name}</span>
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-2">
         {/* Main content */}
         <div className="lg:col-span-2">

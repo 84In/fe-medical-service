@@ -203,17 +203,27 @@ export default function ChuyenKhoaClientPage() {
     };
     return counts[departmentId] || 1000;
   };
+  function formatNumberWithDot(num: number): string {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center text-sm bg-white py-2 px-2 rounded-md text-gray-500">
-        <Link href="/" className="flex items-center hover:text-blue-600">
-          <Home className="h-4 w-4 mr-1" />
-          <span>Trang chủ</span>
-        </Link>
-        <ChevronRight className="h-4 w-4 mx-2" />
-        <span className="text-gray-900 font-medium">Dịch vụ</span>
-      </nav>
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Link
+              href="/"
+              className="flex items-center justify-center hover:text-blue-600"
+            >
+              <Home className="h-4 w-4 mr-1" />
+              <span>Trang chủ</span>
+            </Link>
+            <ChevronRight className="h-4 w-4 mx-2" />
+            <span className="text-gray-900 font-medium">Chuyên khoa</span>
+          </div>
+        </div>
+      </div>
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -230,7 +240,7 @@ export default function ChuyenKhoaClientPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
               <div className="text-center">
                 <div className="text-3xl font-bold text-white">
-                  {departmentStats.totalDepartments}+
+                  {formatNumberWithDot(departmentStats.totalDepartments)}+
                 </div>
                 <div className="text-blue-200">Chuyên khoa</div>
               </div>

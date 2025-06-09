@@ -93,33 +93,33 @@ const specialties = [
   },
 ];
 
-const doctors = [
-  {
-    title: "Bác sĩ tim mạch",
-    href: "/bac-si/tim-mach",
-    description: "Đội ngũ bác sĩ chuyên khoa tim mạch",
-  },
-  {
-    title: "Bác sĩ nhi khoa",
-    href: "/bac-si/nhi-khoa",
-    description: "Bác sĩ chuyên khoa nhi",
-  },
-  {
-    title: "Bác sĩ cơ xương khớp",
-    href: "/bac-si/co-xuong-khop",
-    description: "Chuyên gia về xương khớp",
-  },
-  {
-    title: "Bác sĩ chẩn đoán hình ảnh",
-    href: "/bac-si/chan-doan-hinh-anh",
-    description: "Chuyên gia đọc phim và chẩn đoán",
-  },
-  {
-    title: "Tất cả bác sĩ",
-    href: "/bac-si",
-    description: "Xem danh sách đầy đủ đội ngũ bác sĩ",
-  },
-];
+// const doctors = [
+//   {
+//     title: "Bác sĩ tim mạch",
+//     href: "/doi-ngu-y-te/tim-mach",
+//     description: "Đội ngũ bác sĩ chuyên khoa tim mạch",
+//   },
+//   {
+//     title: "Bác sĩ nhi khoa",
+//     href: "/doi-ngu-y-te/nhi-khoa",
+//     description: "Bác sĩ chuyên khoa nhi",
+//   },
+//   {
+//     title: "Bác sĩ cơ xương khớp",
+//     href: "/doi-ngu-y-te/co-xuong-khop",
+//     description: "Chuyên gia về xương khớp",
+//   },
+//   {
+//     title: "Bác sĩ chẩn đoán hình ảnh",
+//     href: "/doi-ngu-y-te/chan-doan-hinh-anh",
+//     description: "Chuyên gia đọc phim và chẩn đoán",
+//   },
+//   {
+//     title: "Tất cả bác sĩ",
+//     href: "/doi-ngu-y-te",
+//     description: "Xem danh sách đầy đủ đội ngũ bác sĩ",
+//   },
+// ];
 
 const news = [
   {
@@ -352,7 +352,7 @@ export default function NavHeader() {
           </NavigationMenuItem>
 
           {/* Bác sĩ */}
-          <NavigationMenuItem>
+          {/* <NavigationMenuItem>
             <NavigationMenuTrigger
               className={cn(
                 "hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900",
@@ -375,8 +375,19 @@ export default function NavHeader() {
                 ))}
               </ul>
             </NavigationMenuContent>
+          </NavigationMenuItem> */}
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              href="/doi-ngu-bac-si"
+              className={cn(
+                "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+                isActive("/doi-ngu-y-te") &&
+                  "bg-[#4DA9FF]/10 text-[#4DA9FF] font-semibold"
+              )}
+            >
+              Đội ngũ bác sĩ
+            </NavigationMenuLink>
           </NavigationMenuItem>
-
           {/* Tin tức */}
           <NavigationMenuItem>
             <NavigationMenuTrigger
@@ -469,10 +480,15 @@ export default function NavHeader() {
                     items={specialties}
                     isActive={isCategoryActive(specialties)}
                   />
-                  <MobileMenuItem
+                  {/* <MobileMenuItem
                     title="Bác sĩ"
                     items={doctors}
                     isActive={isCategoryActive(doctors)}
+                  /> */}
+                  <MobileMenuItem
+                    title="Đội ngũ bác sĩ"
+                    href="/doi-ngu-bac-si"
+                    isActive={isActive("/doi-ngu-bac-si")}
                   />
                   <MobileMenuItem
                     title="Tin tức"
