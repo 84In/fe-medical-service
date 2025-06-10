@@ -322,7 +322,7 @@ export default function NavHeader() {
             <NavigationMenuTrigger
               className={cn(
                 "hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900",
-                isCategoryActive(specialties) &&
+                isActive("/chuyen-khoa") &&
                   "bg-[#4DA9FF]/10 text-[#4DA9FF] font-semibold data-[state=open]:bg-[#4DA9FF]/10 data-[state=open]:text-[#4DA9FF]"
               )}
             >
@@ -381,7 +381,7 @@ export default function NavHeader() {
               href="/doi-ngu-bac-si"
               className={cn(
                 "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50",
-                isActive("/doi-ngu-y-te") &&
+                isActive("/doi-ngu-bac-si") &&
                   "bg-[#4DA9FF]/10 text-[#4DA9FF] font-semibold"
               )}
             >
@@ -390,28 +390,16 @@ export default function NavHeader() {
           </NavigationMenuItem>
           {/* Tin tức */}
           <NavigationMenuItem>
-            <NavigationMenuTrigger
+            <NavigationMenuLink
+              href="/tin-tuc"
               className={cn(
-                "hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900",
-                isCategoryActive(news) &&
-                  "bg-[#4DA9FF]/10 text-[#4DA9FF] font-semibold data-[state=open]:bg-[#4DA9FF]/10 data-[state=open]:text-[#4DA9FF]"
+                "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+                isActive("/tin-tuc") &&
+                  "bg-[#4DA9FF]/10 text-[#4DA9FF] font-semibold"
               )}
             >
               Tin tức
-            </NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                {news.map((newsItem) => (
-                  <ListItem
-                    key={newsItem.title}
-                    title={newsItem.title}
-                    href={newsItem.href}
-                  >
-                    {newsItem.description}
-                  </ListItem>
-                ))}
-              </ul>
-            </NavigationMenuContent>
+            </NavigationMenuLink>
           </NavigationMenuItem>
 
           {/* Liên hệ */}
@@ -490,10 +478,15 @@ export default function NavHeader() {
                     href="/doi-ngu-bac-si"
                     isActive={isActive("/doi-ngu-bac-si")}
                   />
-                  <MobileMenuItem
+                  {/* <MobileMenuItem
                     title="Tin tức"
                     items={news}
                     isActive={isCategoryActive(news)}
+                  /> */}
+                  <MobileMenuItem
+                    title="Tin tức"
+                    href="/tin-tuc"
+                    isActive={isActive("/tin-tuc")}
                   />
                   <MobileMenuItem
                     title="Liên hệ"
