@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    domains: ["umcclinic.com.vn"],
+  },
 };
 
 export default nextConfig;
