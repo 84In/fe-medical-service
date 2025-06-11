@@ -30,6 +30,7 @@ const segmentMap: Record<string, string> = {
   edit: "Chỉnh sửa",
   "service-types": "Loại dịch vụ",
   "news-types": "Loại tin tức",
+  specialtys: "Chuyên môn",
   // ...
 };
 

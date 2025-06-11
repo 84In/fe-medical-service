@@ -1,19 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,44 +18,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Plus,
-  Search,
-  Edit,
-  Eye,
-  MoreVertical,
-  Stethoscope,
-  MapPin,
-  Calendar,
-  Award,
-  Users,
-  Clock,
-  Phone,
-  Mail,
-  Star,
-  Trash2,
-} from "lucide-react";
 import type {
-  Doctor,
+  Achievement,
   Department,
-  Position,
-  Title,
+  Doctor,
   Education,
   Experience,
-  Achievement,
+  Position,
+  Title,
   WorkingHour,
 } from "@/types/doctor";
-import { MultiSelect } from "@/components/ui/multi-select";
+import {
+  Award,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Clock,
+  Edit,
+  Eye,
+  Mail,
+  MapPin,
+  MoreVertical,
+  Phone,
+  Search,
+  Star,
+  Stethoscope,
+  Users,
+} from "lucide-react";
+import { useState } from "react";
+import { EditDoctorForm } from "./edit-doctor";
+import DoctorForm from "./new-doctor";
 
 // Mock data
 const mockDepartments: Department[] = [
@@ -127,8 +118,9 @@ const mockTitles: Title[] = [
   },
 ];
 
-const mockDoctors: Doctor[] = [
-  {
+// Generate more mock doctors for pagination testing
+const generateMockDoctors = (count: number): Doctor[] => {
+  const baseMockDoctor = {
     id: 1,
     name: "Sarah Johnson",
     avatarUrl: "/placeholder.svg?height=100&width=100",
@@ -145,13 +137,13 @@ const mockDoctors: Doctor[] = [
       {
         id: 1,
         name: "Phẫu thuật tim",
-        status: "ACTIVE",
+        status: "ACTIVE" as const,
         description: "Phẫu thuật tim",
       },
       {
         id: 2,
         name: "Siêu âm tim",
-        status: "ACTIVE",
+        status: "ACTIVE" as const,
         description: "Siêu âm tim",
       },
     ],
@@ -196,14 +188,14 @@ const mockDoctors: Doctor[] = [
         id: 1,
         title: "Thầy thuốc trẻ xuất sắc",
         year: "2018",
-        type: "AWARD",
+        type: "AWARD" as const,
         description: "Giải thưởng của Bộ Y tế",
       },
       {
         id: 2,
         title: "Chứng chỉ Can thiệp tim mạch",
         year: "2012",
-        type: "CERTIFICATION",
+        type: "CERTIFICATION" as const,
         description: "Chứng chỉ quốc tế từ Hoa Kỳ",
       },
     ],
@@ -258,8 +250,87 @@ const mockDoctors: Doctor[] = [
         isAvailable: false,
       },
     ],
-  },
-];
+  };
+
+  // Vietnamese names for doctors
+  const vietnameseNames = [
+    "Nguyễn Văn An",
+    "Trần Thị Bình",
+    "Lê Minh Cường",
+    "Phạm Thanh Dung",
+    "Hoàng Văn Em",
+    "Vũ Thị Phương",
+    "Đặng Minh Giang",
+    "Bùi Thị Hoa",
+    "Đỗ Văn Hùng",
+    "Ngô Thị Lan",
+    "Dương Văn Minh",
+    "Lý Thị Ngọc",
+    "Hồ Văn Phong",
+    "Mai Thị Quỳnh",
+    "Trịnh Văn Sơn",
+    "Võ Thị Tâm",
+    "Đinh Văn Uy",
+    "Lương Thị Vân",
+    "Phan Văn Xuân",
+    "Tạ Thị Yến",
+  ];
+
+  // Generate doctors
+  return Array.from({ length: count }).map((_, index) => {
+    const departmentIndex = index % mockDepartments.length;
+    const positionIndex = index % mockPositions.length;
+    const titleIndex = index % mockTitles.length;
+    const nameIndex = index % vietnameseNames.length;
+    const rating = Math.min(5, Math.max(3, 3.5 + Math.random() * 1.5));
+    const experience = Math.floor(5 + Math.random() * 20).toString();
+    const fee = Math.floor(300000 + Math.random() * 700000);
+
+    return {
+      ...baseMockDoctor,
+      id: index + 1,
+      name: vietnameseNames[nameIndex],
+      department: mockDepartments[departmentIndex],
+      position: mockPositions[positionIndex],
+      title: mockTitles[titleIndex],
+      experience_years: experience,
+      rating: Number.parseFloat(rating.toFixed(1)),
+      consultationFee: fee,
+      email: `doctor${index + 1}@hospital.com`,
+      phone: `0${Math.floor(Math.random() * 900000000) + 100000000}`,
+      status:
+        index % 10 === 0
+          ? ("INACTIVE" as const)
+          : index % 15 === 0
+          ? ("HIDDEN" as const)
+          : ("ACTIVE" as const),
+      specialties: [
+        {
+          id: 1,
+          name: "Phẫu thuật tim",
+          status: "ACTIVE" as const,
+          description: "Phẫu thuật tim",
+        },
+        {
+          id: 2,
+          name: "Siêu âm tim",
+          status: "ACTIVE" as const,
+          description: "Siêu âm tim",
+        },
+      ],
+      achievements: baseMockDoctor.achievements.map((a) => ({
+        ...a,
+        type: a.type as "AWARD" | "CERTIFICATION" | "PUBLICATION" | "RESEARCH",
+      })),
+      workingHours: baseMockDoctor.workingHours.map((wh) => ({
+        ...wh,
+        dayOfWeek: wh.dayOfWeek as WorkingHour["dayOfWeek"],
+      })),
+    };
+  });
+};
+
+const mockDoctors: Doctor[] = generateMockDoctors(50); // Generate 50 doctors for testing
 
 const specialtyOptions = [
   "Tim mạch can thiệp",
@@ -300,6 +371,10 @@ export function DoctorsManagement() {
   const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
   const [newDoctor, setNewDoctor] = useState<Partial<Doctor>>({
     name: "",
     avatarUrl: "",
@@ -349,6 +424,24 @@ export function DoctorsManagement() {
 
     return matchesSearch && matchesStatus && matchesDepartment;
   });
+
+  // Pagination logic
+  const indexOfLastDoctor = currentPage * itemsPerPage;
+  const indexOfFirstDoctor = indexOfLastDoctor - itemsPerPage;
+  const currentDoctors = filteredDoctors.slice(
+    indexOfFirstDoctor,
+    indexOfLastDoctor
+  );
+  const totalPages = Math.ceil(filteredDoctors.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -400,69 +493,16 @@ export function DoctorsManagement() {
     return stars;
   };
 
-  const handleAddDoctor = () => {
-    if (
-      !newDoctor.name ||
-      !newDoctor.department ||
-      !newDoctor.position ||
-      !newDoctor.title
-    )
-      return;
-
-    const doctor: Doctor = {
-      id: Date.now(),
-      name: newDoctor.name,
-      avatarUrl: newDoctor.avatarUrl || "/placeholder.svg?height=100&width=100",
-      introduction: newDoctor.introduction || "",
-      experience_years: newDoctor.experience_years || "0",
-      status: (newDoctor.status as Doctor["status"]) || "ACTIVE",
-      department: newDoctor.department,
-      position: newDoctor.position,
-      title: newDoctor.title,
-      phone: newDoctor.phone || "",
-      email: newDoctor.email || "",
-      specialties: newDoctor.specialties || [],
-      languages: newDoctor.languages || [],
-      consultationFee: newDoctor.consultationFee || 0,
-      rating: newDoctor.rating || 0,
-      education: newDoctor.education || [],
-      workExperience: newDoctor.workExperience || [],
-      achievements: newDoctor.achievements || [],
-      workingHours: newDoctor.workingHours || [],
-    };
-
-    setDoctors([...doctors, doctor]);
-    setNewDoctor({
-      name: "",
-      avatarUrl: "",
-      introduction: "",
-      experience_years: "",
-      status: "ACTIVE",
-      department: undefined,
-      position: undefined,
-      title: undefined,
-      phone: "",
-      email: "",
-      specialties: [],
-      languages: [],
-      consultationFee: 0,
-      rating: 0,
-      education: [],
-      workExperience: [],
-      achievements: [],
-      workingHours: dayOfWeekOptions.map((day, index) => ({
-        id: index + 1,
-        dayOfWeek: day.value as WorkingHour["dayOfWeek"],
-        startTime: day.value === "SUNDAY" ? "" : "08:00",
-        endTime: day.value === "SUNDAY" ? "" : "17:00",
-        isAvailable: day.value !== "SUNDAY",
-      })),
-    });
-    setIsAddDialogOpen(false);
-  };
-
   const handleEditDoctor = (doctor: Doctor) => {
     setEditingDoctor(doctor);
+  };
+
+  const handleDeleteDoctor = (id: number) => {
+    setDoctors(
+      doctors.map((doctor) =>
+        doctor.id === id ? { ...doctor, status: "DELETED" as const } : doctor
+      )
+    );
   };
 
   const handleUpdateDoctor = () => {
@@ -476,148 +516,6 @@ export function DoctorsManagement() {
     setEditingDoctor(null);
   };
 
-  const handleDeleteDoctor = (id: number) => {
-    setDoctors(
-      doctors.map((doctor) =>
-        doctor.id === id ? { ...doctor, status: "DELETED" as const } : doctor
-      )
-    );
-  };
-
-  // Helper functions for managing arrays
-  const addEducation = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void
-  ) => {
-    const newEducation: Education = {
-      id: Date.now(),
-      degree: "",
-      institution: "",
-      year: "",
-      description: "",
-    };
-    setDoctor({
-      ...doctor,
-      education: [...(doctor.education || []), newEducation],
-    });
-  };
-
-  const updateEducation = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number,
-    field: keyof Education,
-    value: string
-  ) => {
-    const updatedEducation = [...(doctor.education || [])];
-    updatedEducation[index] = { ...updatedEducation[index], [field]: value };
-    setDoctor({ ...doctor, education: updatedEducation });
-  };
-
-  const removeEducation = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number
-  ) => {
-    const updatedEducation = [...(doctor.education || [])];
-    updatedEducation.splice(index, 1);
-    setDoctor({ ...doctor, education: updatedEducation });
-  };
-
-  const addWorkExperience = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void
-  ) => {
-    const newExperience: Experience = {
-      id: Date.now(),
-      position: "",
-      organization: "",
-      startYear: "",
-      endYear: "",
-      description: "",
-    };
-    setDoctor({
-      ...doctor,
-      workExperience: [...(doctor.workExperience || []), newExperience],
-    });
-  };
-
-  const updateWorkExperience = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number,
-    field: keyof Experience,
-    value: string
-  ) => {
-    const updatedExperience = [...(doctor.workExperience || [])];
-    updatedExperience[index] = { ...updatedExperience[index], [field]: value };
-    setDoctor({ ...doctor, workExperience: updatedExperience });
-  };
-
-  const removeWorkExperience = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number
-  ) => {
-    const updatedExperience = [...(doctor.workExperience || [])];
-    updatedExperience.splice(index, 1);
-    setDoctor({ ...doctor, workExperience: updatedExperience });
-  };
-
-  const addAchievement = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void
-  ) => {
-    const newAchievement: Achievement = {
-      id: Date.now(),
-      title: "",
-      year: "",
-      type: "AWARD",
-      description: "",
-    };
-    setDoctor({
-      ...doctor,
-      achievements: [...(doctor.achievements || []), newAchievement],
-    });
-  };
-
-  const updateAchievement = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number,
-    field: keyof Achievement,
-    value: string | Achievement["type"]
-  ) => {
-    const updatedAchievements = [...(doctor.achievements || [])];
-    updatedAchievements[index] = {
-      ...updatedAchievements[index],
-      [field]: value,
-    };
-    setDoctor({ ...doctor, achievements: updatedAchievements });
-  };
-
-  const removeAchievement = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number
-  ) => {
-    const updatedAchievements = [...(doctor.achievements || [])];
-    updatedAchievements.splice(index, 1);
-    setDoctor({ ...doctor, achievements: updatedAchievements });
-  };
-
-  const updateWorkingHour = (
-    doctor: Partial<Doctor> | Doctor,
-    setDoctor: (doctor: any) => void,
-    index: number,
-    field: keyof WorkingHour,
-    value: string | boolean
-  ) => {
-    const updatedHours = [...(doctor.workingHours || [])];
-    updatedHours[index] = { ...updatedHours[index], [field]: value };
-    setDoctor({ ...doctor, workingHours: updatedHours });
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -629,677 +527,12 @@ export function DoctorsManagement() {
             hoặc xóa bác sĩ trong hệ thống.
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm mới bác sĩ
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Thêm mới bác sĩ</DialogTitle>
-              <DialogDescription>
-                Nhập thông tin bác sĩ mới để thêm vào hệ thống. Các trường có
-                dấu * là bắt buộc.
-              </DialogDescription>
-            </DialogHeader>
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="basic">Cơ bản</TabsTrigger>
-                <TabsTrigger value="education">Học vấn</TabsTrigger>
-                <TabsTrigger value="experience">Kinh nghiệm</TabsTrigger>
-                <TabsTrigger value="achievements">Thành tích</TabsTrigger>
-                <TabsTrigger value="schedule">Lịch làm việc</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="basic" className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Họ và tên *</Label>
-                    <Input
-                      id="name"
-                      value={newDoctor.name || ""}
-                      onChange={(e) =>
-                        setNewDoctor({ ...newDoctor, name: e.target.value })
-                      }
-                      placeholder="Nhập họ và tên bác sĩ"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="avatarUrl">Ảnh đại diện</Label>
-                    <Input
-                      id="avatarUrl"
-                      value={newDoctor.avatarUrl || ""}
-                      onChange={(e) =>
-                        setNewDoctor({
-                          ...newDoctor,
-                          avatarUrl: e.target.value,
-                        })
-                      }
-                      placeholder="https://example.com/avatar.jpg"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="introduction">Mô tả</Label>
-                    <Textarea
-                      id="introduction"
-                      value={newDoctor.introduction || ""}
-                      onChange={(e) =>
-                        setNewDoctor({
-                          ...newDoctor,
-                          introduction: e.target.value,
-                        })
-                      }
-                      placeholder="Nhập mô tả về bác sĩ"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="experience">Số năm kinh nghiệm</Label>
-                      <Input
-                        id="experience"
-                        value={newDoctor.experience_years || ""}
-                        onChange={(e) =>
-                          setNewDoctor({
-                            ...newDoctor,
-                            experience_years: e.target.value,
-                          })
-                        }
-                        placeholder="e.g., 10"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="rating">Đánh giá (1-5)</Label>
-                      <Input
-                        id="rating"
-                        type="number"
-                        min="0"
-                        max="5"
-                        step="0.1"
-                        value={newDoctor.rating || 0}
-                        onChange={(e) =>
-                          setNewDoctor({
-                            ...newDoctor,
-                            rating: Number.parseFloat(e.target.value),
-                          })
-                        }
-                        placeholder="4.5"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="phone">Số điện thoại</Label>
-                      <Input
-                        id="phone"
-                        value={newDoctor.phone || ""}
-                        onChange={(e) =>
-                          setNewDoctor({ ...newDoctor, phone: e.target.value })
-                        }
-                        placeholder="0123-456-789"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newDoctor.email || ""}
-                        onChange={(e) =>
-                          setNewDoctor({ ...newDoctor, email: e.target.value })
-                        }
-                        placeholder="doctor@hospital.com"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="consultationFee">Phí khám (VNĐ)</Label>
-                    <Input
-                      id="consultationFee"
-                      type="number"
-                      value={newDoctor.consultationFee || 0}
-                      onChange={(e) =>
-                        setNewDoctor({
-                          ...newDoctor,
-                          consultationFee: Number.parseInt(e.target.value),
-                        })
-                      }
-                      placeholder="500000"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="specialties">Chuyên môn</Label>
-                    <MultiSelect
-                      options={specialtyOptions}
-                      value={(newDoctor.specialties || []).map((s) =>
-                        typeof s === "string" ? s : s.name
-                      )}
-                      onChange={(value) =>
-                        setNewDoctor({
-                          ...newDoctor,
-                          specialties: value.map((name) => ({
-                            id: Date.now() + Math.random(),
-                            name,
-                            status: "ACTIVE",
-                            description: name,
-                          })),
-                        })
-                      }
-                      placeholder="Chọn chuyên môn"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="languages">Ngôn ngữ</Label>
-                    <Input
-                      id="languages"
-                      value={
-                        newDoctor.languages
-                          ? newDoctor.languages.join(", ")
-                          : ""
-                      }
-                      onChange={(e) =>
-                        setNewDoctor({
-                          ...newDoctor,
-                          languages: e.target.value
-                            .split(",")
-                            .map((l) => l.trim())
-                            .filter((l) => l),
-                        })
-                      }
-                      placeholder="Tiếng Việt, English, 中文"
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="title">Chức danh *</Label>
-                      <Select
-                        value={newDoctor.title?.id.toString()}
-                        onValueChange={(value) => {
-                          const title = mockTitles.find(
-                            (t) => t.id.toString() === value
-                          );
-                          setNewDoctor({ ...newDoctor, title });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn chức danh" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockTitles.map((title) => (
-                            <SelectItem
-                              key={title.id}
-                              value={title.id.toString()}
-                            >
-                              {title.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="department">Chuyên khoa *</Label>
-                      <Select
-                        value={newDoctor.department?.id.toString()}
-                        onValueChange={(value) => {
-                          const department = mockDepartments.find(
-                            (d) => d.id.toString() === value
-                          );
-                          setNewDoctor({ ...newDoctor, department });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn chuyên khoa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockDepartments.map((dept) => (
-                            <SelectItem
-                              key={dept.id}
-                              value={dept.id.toString()}
-                            >
-                              {dept.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="position">Chức vụ *</Label>
-                      <Select
-                        value={newDoctor.position?.id.toString()}
-                        onValueChange={(value) => {
-                          const position = mockPositions.find(
-                            (p) => p.id.toString() === value
-                          );
-                          setNewDoctor({ ...newDoctor, position });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn chức vụ" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockPositions.map((pos) => (
-                            <SelectItem key={pos.id} value={pos.id.toString()}>
-                              {pos.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="education" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Học vấn</h3>
-                  <Button
-                    type="button"
-                    onClick={() => addEducation(newDoctor, setNewDoctor)}
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm học vấn
-                  </Button>
-                </div>
-                {newDoctor.education?.map((edu, index) => (
-                  <Card key={edu.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Học vấn {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeEducation(newDoctor, setNewDoctor, index)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Bằng cấp</Label>
-                          <Input
-                            value={edu.degree}
-                            onChange={(e) =>
-                              updateEducation(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "degree",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Bác sĩ Đa khoa"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Trường học</Label>
-                          <Input
-                            value={edu.institution}
-                            onChange={(e) =>
-                              updateEducation(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "institution",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Đại học Y Hà Nội"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Năm tốt nghiệp</Label>
-                        <Input
-                          value={edu.year}
-                          onChange={(e) =>
-                            updateEducation(
-                              newDoctor,
-                              setNewDoctor,
-                              index,
-                              "year",
-                              e.target.value
-                            )
-                          }
-                          placeholder="2020"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Mô tả</Label>
-                        <Textarea
-                          value={edu.description}
-                          onChange={(e) =>
-                            updateEducation(
-                              newDoctor,
-                              setNewDoctor,
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Tốt nghiệp loại Giỏi"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
-
-              <TabsContent value="experience" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Kinh nghiệm làm việc</h3>
-                  <Button
-                    type="button"
-                    onClick={() => addWorkExperience(newDoctor, setNewDoctor)}
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm kinh nghiệm
-                  </Button>
-                </div>
-                {newDoctor.workExperience?.map((exp, index) => (
-                  <Card key={exp.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Kinh nghiệm {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeWorkExperience(newDoctor, setNewDoctor, index)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Chức vụ</Label>
-                          <Input
-                            value={exp.position}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "position",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Trưởng khoa Tim mạch"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Tổ chức</Label>
-                          <Input
-                            value={exp.organization}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "organization",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Bệnh viện ABC"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Năm bắt đầu</Label>
-                          <Input
-                            value={exp.startYear}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "startYear",
-                                e.target.value
-                              )
-                            }
-                            placeholder="2020"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Năm kết thúc</Label>
-                          <Input
-                            value={exp.endYear || ""}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "endYear",
-                                e.target.value
-                              )
-                            }
-                            placeholder="2023 (để trống nếu hiện tại)"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Mô tả</Label>
-                        <Textarea
-                          value={exp.description}
-                          onChange={(e) =>
-                            updateWorkExperience(
-                              newDoctor,
-                              setNewDoctor,
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Mô tả công việc và trách nhiệm"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
-
-              <TabsContent value="achievements" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">
-                    Thành tích & Giải thưởng
-                  </h3>
-                  <Button
-                    type="button"
-                    onClick={() => addAchievement(newDoctor, setNewDoctor)}
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm thành tích
-                  </Button>
-                </div>
-                {newDoctor.achievements?.map((achievement, index) => (
-                  <Card key={achievement.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Thành tích {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeAchievement(newDoctor, setNewDoctor, index)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Tiêu đề</Label>
-                          <Input
-                            value={achievement.title}
-                            onChange={(e) =>
-                              updateAchievement(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Thầy thuốc trẻ xuất sắc"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Năm</Label>
-                          <Input
-                            value={achievement.year}
-                            onChange={(e) =>
-                              updateAchievement(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "year",
-                                e.target.value
-                              )
-                            }
-                            placeholder="2023"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Loại</Label>
-                        <Select
-                          value={achievement.type}
-                          onValueChange={(value) =>
-                            updateAchievement(
-                              newDoctor,
-                              setNewDoctor,
-                              index,
-                              "type",
-                              value as Achievement["type"]
-                            )
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {achievementTypes.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Mô tả</Label>
-                        <Textarea
-                          value={achievement.description}
-                          onChange={(e) =>
-                            updateAchievement(
-                              newDoctor,
-                              setNewDoctor,
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Mô tả chi tiết về thành tích"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
-
-              <TabsContent value="schedule" className="space-y-4">
-                <h3 className="text-lg font-medium">Lịch làm việc</h3>
-                {newDoctor.workingHours?.map((hour, index) => (
-                  <Card key={hour.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">
-                          {
-                            dayOfWeekOptions.find(
-                              (d) => d.value === hour.dayOfWeek
-                            )?.label
-                          }
-                        </h4>
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor={`available-${index}`}>
-                            Có làm việc
-                          </Label>
-                          <input
-                            id={`available-${index}`}
-                            type="checkbox"
-                            checked={hour.isAvailable}
-                            onChange={(e) =>
-                              updateWorkingHour(
-                                newDoctor,
-                                setNewDoctor,
-                                index,
-                                "isAvailable",
-                                e.target.checked
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-                      {hour.isAvailable && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label>Giờ bắt đầu</Label>
-                            <Input
-                              type="time"
-                              value={hour.startTime}
-                              onChange={(e) =>
-                                updateWorkingHour(
-                                  newDoctor,
-                                  setNewDoctor,
-                                  index,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label>Giờ kết thúc</Label>
-                            <Input
-                              type="time"
-                              value={hour.endTime}
-                              onChange={(e) =>
-                                updateWorkingHour(
-                                  newDoctor,
-                                  setNewDoctor,
-                                  index,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
-            </Tabs>
-            <DialogFooter>
-              <Button onClick={handleAddDoctor}>Thêm bác sĩ</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DoctorForm
+          newDoctor={newDoctor}
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          setNewDoctor={setNewDoctor}
+        />
       </div>
 
       {/* Filters */}
@@ -1315,12 +548,21 @@ export function DoctorsManagement() {
                 <Input
                   placeholder="Tìm kiếm bác sĩ, chuyên khoa, chuyên môn, ngôn ngữ..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reset to first page on search
+                  }}
                   className="pl-10"
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1); // Reset to first page on filter change
+              }}
+            >
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Lọc theo trạng thái" />
               </SelectTrigger>
@@ -1334,7 +576,10 @@ export function DoctorsManagement() {
             </Select>
             <Select
               value={departmentFilter}
-              onValueChange={setDepartmentFilter}
+              onValueChange={(value) => {
+                setDepartmentFilter(value);
+                setCurrentPage(1); // Reset to first page on filter change
+              }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Lọc theo chuyên khoa" />
@@ -1363,7 +608,7 @@ export function DoctorsManagement() {
                   Tổng số bác sĩ
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {doctors.length}
+                  {filteredDoctors.length}
                 </p>
               </div>
             </div>
@@ -1376,7 +621,7 @@ export function DoctorsManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Hoạt động</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {doctors.filter((d) => d.status === "ACTIVE").length}
+                  {filteredDoctors.filter((d) => d.status === "ACTIVE").length}
                 </p>
               </div>
             </div>
@@ -1391,7 +636,10 @@ export function DoctorsManagement() {
                   Ngừng hoạt động
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {doctors.filter((d) => d.status === "INACTIVE").length}
+                  {
+                    filteredDoctors.filter((d) => d.status === "INACTIVE")
+                      .length
+                  }
                 </p>
               </div>
             </div>
@@ -1412,9 +660,31 @@ export function DoctorsManagement() {
         </Card>
       </div>
 
+      {/* Items per page selector */}
+      <div className="flex justify-end items-center gap-2">
+        <span className="text-sm text-gray-600">Hiển thị:</span>
+        <Select
+          value={itemsPerPage.toString()}
+          onValueChange={(value) => {
+            setItemsPerPage(Number.parseInt(value));
+            setCurrentPage(1); // Reset to first page when changing items per page
+          }}
+        >
+          <SelectTrigger className="w-[80px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="6">6</SelectItem>
+            <SelectItem value="9">9</SelectItem>
+            <SelectItem value="12">12</SelectItem>
+            <SelectItem value="24">24</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Doctors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDoctors.map((doctor) => (
+        {currentDoctors.map((doctor) => (
           <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
@@ -1554,6 +824,86 @@ export function DoctorsManagement() {
         ))}
       </div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-600">
+                Hiển thị {indexOfFirstDoctor + 1} -{" "}
+                {Math.min(indexOfLastDoctor, filteredDoctors.length)} trong tổng
+                số {filteredDoctors.length} bác sĩ
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToFirstPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={
+                          currentPage === pageNumber ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => paginate(pageNumber)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToLastPage}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* No results */}
       {filteredDoctors.length === 0 && (
         <Card>
@@ -1572,697 +922,702 @@ export function DoctorsManagement() {
 
       {/* Edit Dialog - Similar structure with tabs */}
       {editingDoctor && (
-        <Dialog
-          open={!!editingDoctor}
-          onOpenChange={() => setEditingDoctor(null)}
-        >
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Chỉnh sửa thông tin bác sĩ</DialogTitle>
-              <DialogDescription>
-                Cập nhật thông tin bác sĩ để lưu thay đổi vào hệ thống.
-              </DialogDescription>
-            </DialogHeader>
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="basic">Cơ bản</TabsTrigger>
-                <TabsTrigger value="education">Học vấn</TabsTrigger>
-                <TabsTrigger value="experience">Kinh nghiệm</TabsTrigger>
-                <TabsTrigger value="achievements">Thành tích</TabsTrigger>
-                <TabsTrigger value="schedule">Lịch làm việc</TabsTrigger>
-              </TabsList>
+        <EditDoctorForm
+          editingDoctor={editingDoctor}
+          setEditingDoctor={setEditingDoctor}
+          updateDoctor={handleUpdateDoctor}
+        />
+        // <Dialog
+        //   open={!!editingDoctor}
+        //   onOpenChange={() => setEditingDoctor(null)}
+        // >
+        //   <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        //     <DialogHeader>
+        //       <DialogTitle>Chỉnh sửa thông tin bác sĩ</DialogTitle>
+        //       <DialogDescription>
+        //         Cập nhật thông tin bác sĩ để lưu thay đổi vào hệ thống.
+        //       </DialogDescription>
+        //     </DialogHeader>
+        //     <Tabs defaultValue="basic" className="w-full">
+        //       <TabsList className="grid w-full grid-cols-5">
+        //         <TabsTrigger value="basic">Cơ bản</TabsTrigger>
+        //         <TabsTrigger value="education">Học vấn</TabsTrigger>
+        //         <TabsTrigger value="experience">Kinh nghiệm</TabsTrigger>
+        //         <TabsTrigger value="achievements">Thành tích</TabsTrigger>
+        //         <TabsTrigger value="schedule">Lịch làm việc</TabsTrigger>
+        //       </TabsList>
 
-              <TabsContent value="basic" className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-name">Họ và tên</Label>
-                    <Input
-                      id="edit-name"
-                      value={editingDoctor.name}
-                      onChange={(e) =>
-                        setEditingDoctor({
-                          ...editingDoctor,
-                          name: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-avatarUrl">Ảnh đại diện</Label>
-                    <Input
-                      id="edit-avatarUrl"
-                      value={editingDoctor.avatarUrl}
-                      onChange={(e) =>
-                        setEditingDoctor({
-                          ...editingDoctor,
-                          avatarUrl: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-introduction">Mô tả</Label>
-                    <Textarea
-                      id="edit-introduction"
-                      value={editingDoctor.introduction}
-                      onChange={(e) =>
-                        setEditingDoctor({
-                          ...editingDoctor,
-                          introduction: e.target.value,
-                        })
-                      }
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-experience">
-                        Số năm kinh nghiệm
-                      </Label>
-                      <Input
-                        id="edit-experience"
-                        value={editingDoctor.experience_years}
-                        onChange={(e) =>
-                          setEditingDoctor({
-                            ...editingDoctor,
-                            experience_years: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-rating">Đánh giá (1-5)</Label>
-                      <Input
-                        id="edit-rating"
-                        type="number"
-                        min="0"
-                        max="5"
-                        step="0.1"
-                        value={editingDoctor.rating}
-                        onChange={(e) =>
-                          setEditingDoctor({
-                            ...editingDoctor,
-                            rating: Number.parseFloat(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-phone">Số điện thoại</Label>
-                      <Input
-                        id="edit-phone"
-                        value={editingDoctor.phone}
-                        onChange={(e) =>
-                          setEditingDoctor({
-                            ...editingDoctor,
-                            phone: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-email">Email</Label>
-                      <Input
-                        id="edit-email"
-                        type="email"
-                        value={editingDoctor.email}
-                        onChange={(e) =>
-                          setEditingDoctor({
-                            ...editingDoctor,
-                            email: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-consultationFee">Phí khám (VNĐ)</Label>
-                    <Input
-                      id="edit-consultationFee"
-                      type="number"
-                      value={editingDoctor.consultationFee}
-                      onChange={(e) =>
-                        setEditingDoctor({
-                          ...editingDoctor,
-                          consultationFee: Number.parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-specialties">Chuyên môn</Label>
-                    <MultiSelect
-                      options={specialtyOptions}
-                      value={(editingDoctor.specialties || []).map((s) =>
-                        typeof s === "string" ? s : s.name
-                      )}
-                      onChange={(value) =>
-                        setEditingDoctor({
-                          ...editingDoctor,
-                          specialties: value.map((name) => ({
-                            id: Date.now() + Math.random(),
-                            name,
-                            status: "ACTIVE",
-                            description: name,
-                          })),
-                        })
-                      }
-                      placeholder="Chọn chuyên môn"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-languages">Ngôn ngữ</Label>
-                    <Input
-                      id="edit-languages"
-                      value={
-                        editingDoctor.languages
-                          ? editingDoctor.languages.join(", ")
-                          : ""
-                      }
-                      onChange={(e) =>
-                        setEditingDoctor({
-                          ...editingDoctor,
-                          languages: e.target.value
-                            .split(",")
-                            .map((l) => l.trim())
-                            .filter((l) => l),
-                        })
-                      }
-                      placeholder="Tiếng Việt, English, 中文"
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-title">Chức danh</Label>
-                      <Select
-                        value={editingDoctor.title.id.toString()}
-                        onValueChange={(value) => {
-                          const title = mockTitles.find(
-                            (t) => t.id.toString() === value
-                          );
-                          if (title)
-                            setEditingDoctor({ ...editingDoctor, title });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockTitles.map((title) => (
-                            <SelectItem
-                              key={title.id}
-                              value={title.id.toString()}
-                            >
-                              {title.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-department">Chuyên khoa</Label>
-                      <Select
-                        value={editingDoctor.department.id.toString()}
-                        onValueChange={(value) => {
-                          const department = mockDepartments.find(
-                            (d) => d.id.toString() === value
-                          );
-                          if (department)
-                            setEditingDoctor({ ...editingDoctor, department });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockDepartments.map((dept) => (
-                            <SelectItem
-                              key={dept.id}
-                              value={dept.id.toString()}
-                            >
-                              {dept.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="edit-position">Chức vụ</Label>
-                      <Select
-                        value={editingDoctor.position.id.toString()}
-                        onValueChange={(value) => {
-                          const position = mockPositions.find(
-                            (p) => p.id.toString() === value
-                          );
-                          if (position)
-                            setEditingDoctor({ ...editingDoctor, position });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockPositions.map((pos) => (
-                            <SelectItem key={pos.id} value={pos.id.toString()}>
-                              {pos.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
+        //       <TabsContent value="basic" className="space-y-4">
+        //         <div className="grid gap-4">
+        //           <div className="grid gap-2">
+        //             <Label htmlFor="edit-name">Họ và tên</Label>
+        //             <Input
+        //               id="edit-name"
+        //               value={editingDoctor.name}
+        //               onChange={(e) =>
+        //                 setEditingDoctor({
+        //                   ...editingDoctor,
+        //                   name: e.target.value,
+        //                 })
+        //               }
+        //             />
+        //           </div>
+        //           <div className="grid gap-2">
+        //             <Label htmlFor="edit-avatarUrl">Ảnh đại diện</Label>
+        //             <Input
+        //               id="edit-avatarUrl"
+        //               value={editingDoctor.avatarUrl}
+        //               onChange={(e) =>
+        //                 setEditingDoctor({
+        //                   ...editingDoctor,
+        //                   avatarUrl: e.target.value,
+        //                 })
+        //               }
+        //             />
+        //           </div>
+        //           <div className="grid gap-2">
+        //             <Label htmlFor="edit-introduction">Mô tả</Label>
+        //             <Textarea
+        //               id="edit-introduction"
+        //               value={editingDoctor.introduction}
+        //               onChange={(e) =>
+        //                 setEditingDoctor({
+        //                   ...editingDoctor,
+        //                   introduction: e.target.value,
+        //                 })
+        //               }
+        //               rows={3}
+        //             />
+        //           </div>
+        //           <div className="grid grid-cols-2 gap-4">
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-experience">
+        //                 Số năm kinh nghiệm
+        //               </Label>
+        //               <Input
+        //                 id="edit-experience"
+        //                 value={editingDoctor.experience_years}
+        //                 onChange={(e) =>
+        //                   setEditingDoctor({
+        //                     ...editingDoctor,
+        //                     experience_years: e.target.value,
+        //                   })
+        //                 }
+        //               />
+        //             </div>
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-rating">Đánh giá (1-5)</Label>
+        //               <Input
+        //                 id="edit-rating"
+        //                 type="number"
+        //                 min="0"
+        //                 max="5"
+        //                 step="0.1"
+        //                 value={editingDoctor.rating}
+        //                 onChange={(e) =>
+        //                   setEditingDoctor({
+        //                     ...editingDoctor,
+        //                     rating: Number.parseFloat(e.target.value),
+        //                   })
+        //                 }
+        //               />
+        //             </div>
+        //           </div>
+        //           <div className="grid grid-cols-2 gap-4">
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-phone">Số điện thoại</Label>
+        //               <Input
+        //                 id="edit-phone"
+        //                 value={editingDoctor.phone}
+        //                 onChange={(e) =>
+        //                   setEditingDoctor({
+        //                     ...editingDoctor,
+        //                     phone: e.target.value,
+        //                   })
+        //                 }
+        //               />
+        //             </div>
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-email">Email</Label>
+        //               <Input
+        //                 id="edit-email"
+        //                 type="email"
+        //                 value={editingDoctor.email}
+        //                 onChange={(e) =>
+        //                   setEditingDoctor({
+        //                     ...editingDoctor,
+        //                     email: e.target.value,
+        //                   })
+        //                 }
+        //               />
+        //             </div>
+        //           </div>
+        //           <div className="grid gap-2">
+        //             <Label htmlFor="edit-consultationFee">Phí khám (VNĐ)</Label>
+        //             <Input
+        //               id="edit-consultationFee"
+        //               type="number"
+        //               value={editingDoctor.consultationFee}
+        //               onChange={(e) =>
+        //                 setEditingDoctor({
+        //                   ...editingDoctor,
+        //                   consultationFee: Number.parseInt(e.target.value),
+        //                 })
+        //               }
+        //             />
+        //           </div>
+        //           <div className="grid gap-2">
+        //             <Label htmlFor="edit-specialties">Chuyên môn</Label>
+        //             <MultiSelect
+        //               options={specialtyOptions}
+        //               value={(editingDoctor.specialties || []).map((s) =>
+        //                 typeof s === "string" ? s : s.name
+        //               )}
+        //               onChange={(value) =>
+        //                 setEditingDoctor({
+        //                   ...editingDoctor,
+        //                   specialties: value.map((name) => ({
+        //                     id: Date.now() + Math.random(),
+        //                     name,
+        //                     status: "ACTIVE",
+        //                     description: name,
+        //                   })),
+        //                 })
+        //               }
+        //               placeholder="Chọn chuyên môn"
+        //             />
+        //           </div>
+        //           <div className="grid gap-2">
+        //             <Label htmlFor="edit-languages">Ngôn ngữ</Label>
+        //             <Input
+        //               id="edit-languages"
+        //               value={
+        //                 editingDoctor.languages
+        //                   ? editingDoctor.languages.join(", ")
+        //                   : ""
+        //               }
+        //               onChange={(e) =>
+        //                 setEditingDoctor({
+        //                   ...editingDoctor,
+        //                   languages: e.target.value
+        //                     .split(",")
+        //                     .map((l) => l.trim())
+        //                     .filter((l) => l),
+        //                 })
+        //               }
+        //               placeholder="Tiếng Việt, English, 中文"
+        //             />
+        //           </div>
+        //           <div className="grid grid-cols-3 gap-4">
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-title">Chức danh</Label>
+        //               <Select
+        //                 value={editingDoctor.title.id.toString()}
+        //                 onValueChange={(value) => {
+        //                   const title = mockTitles.find(
+        //                     (t) => t.id.toString() === value
+        //                   );
+        //                   if (title)
+        //                     setEditingDoctor({ ...editingDoctor, title });
+        //                 }}
+        //               >
+        //                 <SelectTrigger>
+        //                   <SelectValue />
+        //                 </SelectTrigger>
+        //                 <SelectContent>
+        //                   {mockTitles.map((title) => (
+        //                     <SelectItem
+        //                       key={title.id}
+        //                       value={title.id.toString()}
+        //                     >
+        //                       {title.name}
+        //                     </SelectItem>
+        //                   ))}
+        //                 </SelectContent>
+        //               </Select>
+        //             </div>
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-department">Chuyên khoa</Label>
+        //               <Select
+        //                 value={editingDoctor.department.id.toString()}
+        //                 onValueChange={(value) => {
+        //                   const department = mockDepartments.find(
+        //                     (d) => d.id.toString() === value
+        //                   );
+        //                   if (department)
+        //                     setEditingDoctor({ ...editingDoctor, department });
+        //                 }}
+        //               >
+        //                 <SelectTrigger>
+        //                   <SelectValue />
+        //                 </SelectTrigger>
+        //                 <SelectContent>
+        //                   {mockDepartments.map((dept) => (
+        //                     <SelectItem
+        //                       key={dept.id}
+        //                       value={dept.id.toString()}
+        //                     >
+        //                       {dept.name}
+        //                     </SelectItem>
+        //                   ))}
+        //                 </SelectContent>
+        //               </Select>
+        //             </div>
+        //             <div className="grid gap-2">
+        //               <Label htmlFor="edit-position">Chức vụ</Label>
+        //               <Select
+        //                 value={editingDoctor.position.id.toString()}
+        //                 onValueChange={(value) => {
+        //                   const position = mockPositions.find(
+        //                     (p) => p.id.toString() === value
+        //                   );
+        //                   if (position)
+        //                     setEditingDoctor({ ...editingDoctor, position });
+        //                 }}
+        //               >
+        //                 <SelectTrigger>
+        //                   <SelectValue />
+        //                 </SelectTrigger>
+        //                 <SelectContent>
+        //                   {mockPositions.map((pos) => (
+        //                     <SelectItem key={pos.id} value={pos.id.toString()}>
+        //                       {pos.name}
+        //                     </SelectItem>
+        //                   ))}
+        //                 </SelectContent>
+        //               </Select>
+        //             </div>
+        //           </div>
+        //         </div>
+        //       </TabsContent>
 
-              <TabsContent value="education" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Học vấn</h3>
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      addEducation(editingDoctor, setEditingDoctor)
-                    }
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm học vấn
-                  </Button>
-                </div>
-                {editingDoctor.education?.map((edu, index) => (
-                  <Card key={edu.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Học vấn {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeEducation(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index
-                            )
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Bằng cấp</Label>
-                          <Input
-                            value={edu.degree}
-                            onChange={(e) =>
-                              updateEducation(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "degree",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Bác sĩ Đa khoa"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Trường học</Label>
-                          <Input
-                            value={edu.institution}
-                            onChange={(e) =>
-                              updateEducation(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "institution",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Đại học Y Hà Nội"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Năm tốt nghiệp</Label>
-                        <Input
-                          value={edu.year}
-                          onChange={(e) =>
-                            updateEducation(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index,
-                              "year",
-                              e.target.value
-                            )
-                          }
-                          placeholder="2020"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Mô tả</Label>
-                        <Textarea
-                          value={edu.description}
-                          onChange={(e) =>
-                            updateEducation(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Tốt nghiệp loại Giỏi"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
+        //       <TabsContent value="education" className="space-y-4">
+        //         <div className="flex justify-between items-center">
+        //           <h3 className="text-lg font-medium">Học vấn</h3>
+        //           <Button
+        //             type="button"
+        //             onClick={() =>
+        //               addEducation(editingDoctor, setEditingDoctor)
+        //             }
+        //             size="sm"
+        //           >
+        //             <Plus className="h-4 w-4 mr-2" />
+        //             Thêm học vấn
+        //           </Button>
+        //         </div>
+        //         {editingDoctor.education?.map((edu, index) => (
+        //           <Card key={edu.id} className="p-4">
+        //             <div className="grid gap-4">
+        //               <div className="flex justify-between items-center">
+        //                 <h4 className="font-medium">Học vấn {index + 1}</h4>
+        //                 <Button
+        //                   type="button"
+        //                   variant="ghost"
+        //                   size="sm"
+        //                   onClick={() =>
+        //                     removeEducation(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index
+        //                     )
+        //                   }
+        //                 >
+        //                   <Trash2 className="h-4 w-4" />
+        //                 </Button>
+        //               </div>
+        //               <div className="grid grid-cols-2 gap-4">
+        //                 <div className="grid gap-2">
+        //                   <Label>Bằng cấp</Label>
+        //                   <Input
+        //                     value={edu.degree}
+        //                     onChange={(e) =>
+        //                       updateEducation(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "degree",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="Bác sĩ Đa khoa"
+        //                   />
+        //                 </div>
+        //                 <div className="grid gap-2">
+        //                   <Label>Trường học</Label>
+        //                   <Input
+        //                     value={edu.institution}
+        //                     onChange={(e) =>
+        //                       updateEducation(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "institution",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="Đại học Y Hà Nội"
+        //                   />
+        //                 </div>
+        //               </div>
+        //               <div className="grid gap-2">
+        //                 <Label>Năm tốt nghiệp</Label>
+        //                 <Input
+        //                   value={edu.year}
+        //                   onChange={(e) =>
+        //                     updateEducation(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index,
+        //                       "year",
+        //                       e.target.value
+        //                     )
+        //                   }
+        //                   placeholder="2020"
+        //                 />
+        //               </div>
+        //               <div className="grid gap-2">
+        //                 <Label>Mô tả</Label>
+        //                 <Textarea
+        //                   value={edu.description}
+        //                   onChange={(e) =>
+        //                     updateEducation(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index,
+        //                       "description",
+        //                       e.target.value
+        //                     )
+        //                   }
+        //                   placeholder="Tốt nghiệp loại Giỏi"
+        //                   rows={2}
+        //                 />
+        //               </div>
+        //             </div>
+        //           </Card>
+        //         ))}
+        //       </TabsContent>
 
-              <TabsContent value="experience" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Kinh nghiệm làm việc</h3>
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      addWorkExperience(editingDoctor, setEditingDoctor)
-                    }
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm kinh nghiệm
-                  </Button>
-                </div>
-                {editingDoctor.workExperience?.map((exp, index) => (
-                  <Card key={exp.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Kinh nghiệm {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeWorkExperience(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index
-                            )
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Chức vụ</Label>
-                          <Input
-                            value={exp.position}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "position",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Trưởng khoa Tim mạch"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Tổ chức</Label>
-                          <Input
-                            value={exp.organization}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "organization",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Bệnh viện ABC"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Năm bắt đầu</Label>
-                          <Input
-                            value={exp.startYear}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "startYear",
-                                e.target.value
-                              )
-                            }
-                            placeholder="2020"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Năm kết thúc</Label>
-                          <Input
-                            value={exp.endYear || ""}
-                            onChange={(e) =>
-                              updateWorkExperience(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "endYear",
-                                e.target.value
-                              )
-                            }
-                            placeholder="2023 (để trống nếu hiện tại)"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Mô tả</Label>
-                        <Textarea
-                          value={exp.description}
-                          onChange={(e) =>
-                            updateWorkExperience(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Mô tả công việc và trách nhiệm"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
+        //       <TabsContent value="experience" className="space-y-4">
+        //         <div className="flex justify-between items-center">
+        //           <h3 className="text-lg font-medium">Kinh nghiệm làm việc</h3>
+        //           <Button
+        //             type="button"
+        //             onClick={() =>
+        //               addWorkExperience(editingDoctor, setEditingDoctor)
+        //             }
+        //             size="sm"
+        //           >
+        //             <Plus className="h-4 w-4 mr-2" />
+        //             Thêm kinh nghiệm
+        //           </Button>
+        //         </div>
+        //         {editingDoctor.workExperience?.map((exp, index) => (
+        //           <Card key={exp.id} className="p-4">
+        //             <div className="grid gap-4">
+        //               <div className="flex justify-between items-center">
+        //                 <h4 className="font-medium">Kinh nghiệm {index + 1}</h4>
+        //                 <Button
+        //                   type="button"
+        //                   variant="ghost"
+        //                   size="sm"
+        //                   onClick={() =>
+        //                     removeWorkExperience(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index
+        //                     )
+        //                   }
+        //                 >
+        //                   <Trash2 className="h-4 w-4" />
+        //                 </Button>
+        //               </div>
+        //               <div className="grid grid-cols-2 gap-4">
+        //                 <div className="grid gap-2">
+        //                   <Label>Chức vụ</Label>
+        //                   <Input
+        //                     value={exp.position}
+        //                     onChange={(e) =>
+        //                       updateWorkExperience(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "position",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="Trưởng khoa Tim mạch"
+        //                   />
+        //                 </div>
+        //                 <div className="grid gap-2">
+        //                   <Label>Tổ chức</Label>
+        //                   <Input
+        //                     value={exp.organization}
+        //                     onChange={(e) =>
+        //                       updateWorkExperience(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "organization",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="Bệnh viện ABC"
+        //                   />
+        //                 </div>
+        //               </div>
+        //               <div className="grid grid-cols-2 gap-4">
+        //                 <div className="grid gap-2">
+        //                   <Label>Năm bắt đầu</Label>
+        //                   <Input
+        //                     value={exp.startYear}
+        //                     onChange={(e) =>
+        //                       updateWorkExperience(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "startYear",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="2020"
+        //                   />
+        //                 </div>
+        //                 <div className="grid gap-2">
+        //                   <Label>Năm kết thúc</Label>
+        //                   <Input
+        //                     value={exp.endYear || ""}
+        //                     onChange={(e) =>
+        //                       updateWorkExperience(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "endYear",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="2023 (để trống nếu hiện tại)"
+        //                   />
+        //                 </div>
+        //               </div>
+        //               <div className="grid gap-2">
+        //                 <Label>Mô tả</Label>
+        //                 <Textarea
+        //                   value={exp.description}
+        //                   onChange={(e) =>
+        //                     updateWorkExperience(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index,
+        //                       "description",
+        //                       e.target.value
+        //                     )
+        //                   }
+        //                   placeholder="Mô tả công việc và trách nhiệm"
+        //                   rows={2}
+        //                 />
+        //               </div>
+        //             </div>
+        //           </Card>
+        //         ))}
+        //       </TabsContent>
 
-              <TabsContent value="achievements" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">
-                    Thành tích & Giải thưởng
-                  </h3>
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      addAchievement(editingDoctor, setEditingDoctor)
-                    }
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm thành tích
-                  </Button>
-                </div>
-                {editingDoctor.achievements?.map((achievement, index) => (
-                  <Card key={achievement.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium">Thành tích {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            removeAchievement(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index
-                            )
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Tiêu đề</Label>
-                          <Input
-                            value={achievement.title}
-                            onChange={(e) =>
-                              updateAchievement(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Thầy thuốc trẻ xuất sắc"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Năm</Label>
-                          <Input
-                            value={achievement.year}
-                            onChange={(e) =>
-                              updateAchievement(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "year",
-                                e.target.value
-                              )
-                            }
-                            placeholder="2023"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Loại</Label>
-                        <Select
-                          value={achievement.type}
-                          onValueChange={(value) =>
-                            updateAchievement(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index,
-                              "type",
-                              value as Achievement["type"]
-                            )
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {achievementTypes.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label>Mô tả</Label>
-                        <Textarea
-                          value={achievement.description}
-                          onChange={(e) =>
-                            updateAchievement(
-                              editingDoctor,
-                              setEditingDoctor,
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Mô tả chi tiết về thành tích"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
+        //       <TabsContent value="achievements" className="space-y-4">
+        //         <div className="flex justify-between items-center">
+        //           <h3 className="text-lg font-medium">
+        //             Thành tích & Giải thưởng
+        //           </h3>
+        //           <Button
+        //             type="button"
+        //             onClick={() =>
+        //               addAchievement(editingDoctor, setEditingDoctor)
+        //             }
+        //             size="sm"
+        //           >
+        //             <Plus className="h-4 w-4 mr-2" />
+        //             Thêm thành tích
+        //           </Button>
+        //         </div>
+        //         {editingDoctor.achievements?.map((achievement, index) => (
+        //           <Card key={achievement.id} className="p-4">
+        //             <div className="grid gap-4">
+        //               <div className="flex justify-between items-center">
+        //                 <h4 className="font-medium">Thành tích {index + 1}</h4>
+        //                 <Button
+        //                   type="button"
+        //                   variant="ghost"
+        //                   size="sm"
+        //                   onClick={() =>
+        //                     removeAchievement(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index
+        //                     )
+        //                   }
+        //                 >
+        //                   <Trash2 className="h-4 w-4" />
+        //                 </Button>
+        //               </div>
+        //               <div className="grid grid-cols-2 gap-4">
+        //                 <div className="grid gap-2">
+        //                   <Label>Tiêu đề</Label>
+        //                   <Input
+        //                     value={achievement.title}
+        //                     onChange={(e) =>
+        //                       updateAchievement(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "title",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="Thầy thuốc trẻ xuất sắc"
+        //                   />
+        //                 </div>
+        //                 <div className="grid gap-2">
+        //                   <Label>Năm</Label>
+        //                   <Input
+        //                     value={achievement.year}
+        //                     onChange={(e) =>
+        //                       updateAchievement(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "year",
+        //                         e.target.value
+        //                       )
+        //                     }
+        //                     placeholder="2023"
+        //                   />
+        //                 </div>
+        //               </div>
+        //               <div className="grid gap-2">
+        //                 <Label>Loại</Label>
+        //                 <Select
+        //                   value={achievement.type}
+        //                   onValueChange={(value) =>
+        //                     updateAchievement(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index,
+        //                       "type",
+        //                       value as Achievement["type"]
+        //                     )
+        //                   }
+        //                 >
+        //                   <SelectTrigger>
+        //                     <SelectValue />
+        //                   </SelectTrigger>
+        //                   <SelectContent>
+        //                     {achievementTypes.map((type) => (
+        //                       <SelectItem key={type.value} value={type.value}>
+        //                         {type.label}
+        //                       </SelectItem>
+        //                     ))}
+        //                   </SelectContent>
+        //                 </Select>
+        //               </div>
+        //               <div className="grid gap-2">
+        //                 <Label>Mô tả</Label>
+        //                 <Textarea
+        //                   value={achievement.description}
+        //                   onChange={(e) =>
+        //                     updateAchievement(
+        //                       editingDoctor,
+        //                       setEditingDoctor,
+        //                       index,
+        //                       "description",
+        //                       e.target.value
+        //                     )
+        //                   }
+        //                   placeholder="Mô tả chi tiết về thành tích"
+        //                   rows={2}
+        //                 />
+        //               </div>
+        //             </div>
+        //           </Card>
+        //         ))}
+        //       </TabsContent>
 
-              <TabsContent value="schedule" className="space-y-4">
-                <h3 className="text-lg font-medium">Lịch làm việc</h3>
-                {editingDoctor.workingHours?.map((hour, index) => (
-                  <Card key={hour.id} className="p-4">
-                    <div className="grid gap-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">
-                          {
-                            dayOfWeekOptions.find(
-                              (d) => d.value === hour.dayOfWeek
-                            )?.label
-                          }
-                        </h4>
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor={`edit-available-${index}`}>
-                            Có làm việc
-                          </Label>
-                          <input
-                            id={`edit-available-${index}`}
-                            type="checkbox"
-                            checked={hour.isAvailable}
-                            onChange={(e) =>
-                              updateWorkingHour(
-                                editingDoctor,
-                                setEditingDoctor,
-                                index,
-                                "isAvailable",
-                                e.target.checked
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-                      {hour.isAvailable && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label>Giờ bắt đầu</Label>
-                            <Input
-                              type="time"
-                              value={hour.startTime}
-                              onChange={(e) =>
-                                updateWorkingHour(
-                                  editingDoctor,
-                                  setEditingDoctor,
-                                  index,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label>Giờ kết thúc</Label>
-                            <Input
-                              type="time"
-                              value={hour.endTime}
-                              onChange={(e) =>
-                                updateWorkingHour(
-                                  editingDoctor,
-                                  setEditingDoctor,
-                                  index,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
-            </Tabs>
-            <DialogFooter>
-              <Button onClick={handleUpdateDoctor}>Cập nhật bác sĩ</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        //       <TabsContent value="schedule" className="space-y-4">
+        //         <h3 className="text-lg font-medium">Lịch làm việc</h3>
+        //         {editingDoctor.workingHours?.map((hour, index) => (
+        //           <Card key={hour.id} className="p-4">
+        //             <div className="grid gap-4">
+        //               <div className="flex items-center justify-between">
+        //                 <h4 className="font-medium">
+        //                   {
+        //                     dayOfWeekOptions.find(
+        //                       (d) => d.value === hour.dayOfWeek
+        //                     )?.label
+        //                   }
+        //                 </h4>
+        //                 <div className="flex items-center space-x-2">
+        //                   <Label htmlFor={`edit-available-${index}`}>
+        //                     Có làm việc
+        //                   </Label>
+        //                   <input
+        //                     id={`edit-available-${index}`}
+        //                     type="checkbox"
+        //                     checked={hour.isAvailable}
+        //                     onChange={(e) =>
+        //                       updateWorkingHour(
+        //                         editingDoctor,
+        //                         setEditingDoctor,
+        //                         index,
+        //                         "isAvailable",
+        //                         e.target.checked
+        //                       )
+        //                     }
+        //                   />
+        //                 </div>
+        //               </div>
+        //               {hour.isAvailable && (
+        //                 <div className="grid grid-cols-2 gap-4">
+        //                   <div className="grid gap-2">
+        //                     <Label>Giờ bắt đầu</Label>
+        //                     <Input
+        //                       type="time"
+        //                       value={hour.startTime}
+        //                       onChange={(e) =>
+        //                         updateWorkingHour(
+        //                           editingDoctor,
+        //                           setEditingDoctor,
+        //                           index,
+        //                           "startTime",
+        //                           e.target.value
+        //                         )
+        //                       }
+        //                     />
+        //                   </div>
+        //                   <div className="grid gap-2">
+        //                     <Label>Giờ kết thúc</Label>
+        //                     <Input
+        //                       type="time"
+        //                       value={hour.endTime}
+        //                       onChange={(e) =>
+        //                         updateWorkingHour(
+        //                           editingDoctor,
+        //                           setEditingDoctor,
+        //                           index,
+        //                           "endTime",
+        //                           e.target.value
+        //                         )
+        //                       }
+        //                     />
+        //                   </div>
+        //                 </div>
+        //               )}
+        //             </div>
+        //           </Card>
+        //         ))}
+        //       </TabsContent>
+        //     </Tabs>
+        //     <DialogFooter>
+        //       <Button onClick={handleUpdateDoctor}>Cập nhật bác sĩ</Button>
+        //     </DialogFooter>
+        //   </DialogContent>
+        // </Dialog>
       )}
     </div>
   );
