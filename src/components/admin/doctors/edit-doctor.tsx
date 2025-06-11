@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -37,11 +36,12 @@ import {
   addWorkExperience,
   updateWorkExperience,
   removeWorkExperience,
-  addAchievement,
   updateAchievement,
   removeAchievement,
   updateWorkingHour,
+  addAchievement,
 } from "@/utils/doctorUtils";
+import { MultiSelect } from "@/components/ui/multi-select";
 interface DoctorFormProps {
   editingDoctor: Doctor;
   setEditingDoctor: React.Dispatch<React.SetStateAction<Doctor | null>>;

@@ -1,60 +1,55 @@
-// types
 import {
+  Achievement,
   Doctor,
   Education,
   Experience,
-  Achievement,
   WorkingHour,
 } from "@/types";
 
-// Generic function to update item in array
-function updateArrayItem<T>(
-  array: T[] | undefined,
-  index: number,
-  field: keyof T,
-  value: T[keyof T]
-): T[] {
-  const copy = [...(array || [])];
-  copy[index] = { ...copy[index], [field]: value };
-  return copy;
-}
-
-// Education
-export const addEducation = (doctor: DoctorData, setDoctor: SetDoctor) => {
-  const newItem: Education = {
+export const addEducation = (
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void
+) => {
+  const newEducation: Education = {
     id: Date.now(),
     degree: "",
     institution: "",
     year: "",
     description: "",
   };
-  setDoctor({ ...doctor, education: [...(doctor.education || []), newItem] });
+  setDoctor({
+    ...doctor,
+    education: [...(doctor.education || []), newEducation],
+  });
 };
 
 export const updateEducation = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number,
   field: keyof Education,
   value: string
 ) => {
-  const updated = updateArrayItem(doctor.education, index, field, value);
-  setDoctor({ ...doctor, education: updated });
+  const updatedEducation = [...(doctor.education || [])];
+  updatedEducation[index] = { ...updatedEducation[index], [field]: value };
+  setDoctor({ ...doctor, education: updatedEducation });
 };
 
 export const removeEducation = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number
 ) => {
-  const updated = [...(doctor.education || [])];
-  updated.splice(index, 1);
-  setDoctor({ ...doctor, education: updated });
+  const updatedEducation = [...(doctor.education || [])];
+  updatedEducation.splice(index, 1);
+  setDoctor({ ...doctor, education: updatedEducation });
 };
 
-// Work Experience
-export const addWorkExperience = (doctor: DoctorData, setDoctor: SetDoctor) => {
-  const newItem: Experience = {
+export const addWorkExperience = (
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void
+) => {
+  const newExperience: Experience = {
     id: Date.now(),
     position: "",
     organization: "",
@@ -64,34 +59,37 @@ export const addWorkExperience = (doctor: DoctorData, setDoctor: SetDoctor) => {
   };
   setDoctor({
     ...doctor,
-    workExperience: [...(doctor.workExperience || []), newItem],
+    workExperience: [...(doctor.workExperience || []), newExperience],
   });
 };
 
 export const updateWorkExperience = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number,
   field: keyof Experience,
   value: string
 ) => {
-  const updated = updateArrayItem(doctor.workExperience, index, field, value);
-  setDoctor({ ...doctor, workExperience: updated });
+  const updatedExperience = [...(doctor.workExperience || [])];
+  updatedExperience[index] = { ...updatedExperience[index], [field]: value };
+  setDoctor({ ...doctor, workExperience: updatedExperience });
 };
 
 export const removeWorkExperience = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number
 ) => {
-  const updated = [...(doctor.workExperience || [])];
-  updated.splice(index, 1);
-  setDoctor({ ...doctor, workExperience: updated });
+  const updatedExperience = [...(doctor.workExperience || [])];
+  updatedExperience.splice(index, 1);
+  setDoctor({ ...doctor, workExperience: updatedExperience });
 };
 
-// Achievements
-export const addAchievement = (doctor: DoctorData, setDoctor: SetDoctor) => {
-  const newItem: Achievement = {
+export const addAchievement = (
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void
+) => {
+  const newAchievement: Achievement = {
     id: Date.now(),
     title: "",
     year: "",
@@ -100,39 +98,43 @@ export const addAchievement = (doctor: DoctorData, setDoctor: SetDoctor) => {
   };
   setDoctor({
     ...doctor,
-    achievements: [...(doctor.achievements || []), newItem],
+    achievements: [...(doctor.achievements || []), newAchievement],
   });
 };
 
 export const updateAchievement = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number,
   field: keyof Achievement,
   value: string | Achievement["type"]
 ) => {
-  const updated = updateArrayItem(doctor.achievements, index, field, value);
-  setDoctor({ ...doctor, achievements: updated });
+  const updatedAchievements = [...(doctor.achievements || [])];
+  updatedAchievements[index] = {
+    ...updatedAchievements[index],
+    [field]: value,
+  };
+  setDoctor({ ...doctor, achievements: updatedAchievements });
 };
 
 export const removeAchievement = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number
 ) => {
-  const updated = [...(doctor.achievements || [])];
-  updated.splice(index, 1);
-  setDoctor({ ...doctor, achievements: updated });
+  const updatedAchievements = [...(doctor.achievements || [])];
+  updatedAchievements.splice(index, 1);
+  setDoctor({ ...doctor, achievements: updatedAchievements });
 };
 
-// Working Hours
 export const updateWorkingHour = (
-  doctor: DoctorData,
-  setDoctor: SetDoctor,
+  doctor: Partial<Doctor> | Doctor,
+  setDoctor: (doctor: any) => void,
   index: number,
   field: keyof WorkingHour,
   value: string | boolean
 ) => {
-  const updated = updateArrayItem(doctor.workingHours, index, field, value);
-  setDoctor({ ...doctor, workingHours: updated });
+  const updatedHours = [...(doctor.workingHours || [])];
+  updatedHours[index] = { ...updatedHours[index], [field]: value };
+  setDoctor({ ...doctor, workingHours: updatedHours });
 };
