@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AdminPage() {
   return (
     <div className="px-6 py-8">
@@ -12,27 +14,36 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Quản lý bác sĩ */}
-          <div className="bg-blue-50 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+          <Link
+            href="/admin/doctors"
+            className="bg-blue-50 rounded-xl p-4 shadow-sm hover:shadow-md transition"
+          >
             <h2 className="text-lg font-semibold text-blue-800 mb-2">
               Quản lý bác sĩ
             </h2>
             <p className="text-gray-600 text-sm">
               Cập nhật thông tin bác sĩ, chuyên khoa.
             </p>
-          </div>
+          </Link>
 
           {/* Quản lý dịch vụ */}
-          <div className="bg-green-50 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+          <Link
+            href={"/admin/services"}
+            className="bg-green-50 rounded-xl p-4 shadow-sm hover:shadow-md transition"
+          >
             <h2 className="text-lg font-semibold text-green-800 mb-2">
               Quản lý dịch vụ
             </h2>
             <p className="text-gray-600 text-sm">
               Thêm, chỉnh sửa và phân loại các dịch vụ khám chữa bệnh hiện có.
             </p>
-          </div>
+          </Link>
 
           {/* Quản lý tin tức */}
-          <div className="bg-yellow-50 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+          <Link
+            href={"/admin/news"}
+            className="bg-yellow-50 rounded-xl p-4 shadow-sm hover:shadow-md transition"
+          >
             <h2 className="text-lg font-semibold text-yellow-800 mb-2">
               Quản lý tin tức
             </h2>
@@ -40,7 +51,7 @@ export default function AdminPage() {
               Đăng bài viết mới, chia sẻ kiến thức y tế và cập nhật hoạt động
               trung tâm.
             </p>
-          </div>
+          </Link>
         </div>
       </div>
     </div>
