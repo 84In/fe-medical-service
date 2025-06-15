@@ -1,41 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,22 +10,67 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Plus,
-  Search,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { addDepartment, getDepartments, updateDepartment } from "@/services";
+import type { Department } from "@/types/doctor";
+import {
+  Activity,
+  Building2,
+  ChevronsLeft,
+  ChevronsRight,
+  Clock,
   Edit,
   Eye,
-  MoreVertical,
-  Building2,
-  Users,
-  Activity,
-  Clock,
-  Trash2,
   FileText,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+  Users,
 } from "lucide-react";
-import type { Department } from "@/types/doctor";
+import { useEffect, useState } from "react";
 import { TiptapEditor } from "../tiptap-editor";
+import {
+  DepartmentsErrorFallback,
+  DepartmentsLoadingSkeleton,
+} from "./department-skeleton";
+import { Toast } from "@/components/ui/toast";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockDepartments: Department[] = [
@@ -101,6 +110,14 @@ export function DepartmentsManagement() {
   const [viewingDepartment, setViewingDepartment] = useState<Department | null>(
     null
   );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [newDepartment, setNewDepartment] = useState<Partial<Department>>({
     name: "",
     contentHtml: "",
@@ -108,15 +125,6 @@ export function DepartmentsManagement() {
   });
 
   // Filter departments
-  const filteredDepartments = departments.filter((department) => {
-    const matchesSearch = department.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || department.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -148,17 +156,68 @@ export function DepartmentsManagement() {
     }
   };
 
-  const handleAddDepartment = () => {
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await getDepartments(
+          currentPage - 1,
+          itemsPerPage,
+          searchTerm,
+          statusFilter
+        );
+        console.log("Fetched doctors:", data);
+
+        setDepartments(data.items || []);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách chuyên khoa:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handler = setTimeout(() => {
+      fetchDepartments();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  if (loading) return <DepartmentsLoadingSkeleton />;
+  if (error) return <DepartmentsErrorFallback />;
+
+  const handleAddDepartment = async () => {
     if (!newDepartment.name || !newDepartment.contentHtml) return;
 
-    const department: Department = {
-      id: Date.now(),
+    const department: Partial<Department> = {
       name: newDepartment.name,
       contentHtml: newDepartment.contentHtml,
       status: (newDepartment.status as Department["status"]) || "ACTIVE",
     };
 
-    setDepartments([...departments, department]);
+    try {
+      const { code, message, result } = await addDepartment(department);
+      if (!code || code !== 0) {
+        throw new Error(message || "Thêm chuyên khoa thất bại");
+      } else {
+        toast({
+          title: "Thành công!",
+          description: "Thêm chuyên khoa thành công!",
+          variant: "default",
+        });
+        setDepartments((prev) => [...prev, result]);
+      }
+    } catch (error) {
+      console.error("Error adding department:", error);
+      toast({
+        title: "Thất bại!",
+        description:
+          error instanceof Error ? error.message : "Thêm chuyên khoa thất bại!",
+        variant: "destructive",
+      });
+    }
     setNewDepartment({
       name: "",
       contentHtml: "",
@@ -171,15 +230,40 @@ export function DepartmentsManagement() {
     setEditingDepartment(department);
   };
 
-  const handleUpdateDepartment = () => {
-    if (!editingDepartment) return;
+  const handleUpdateDepartment = async () => {
+    if (!editingDepartment || !editingDepartment.id) return;
 
-    setDepartments(
-      departments.map((department) =>
-        department.id === editingDepartment.id ? editingDepartment : department
-      )
-    );
-    setEditingDepartment(null);
+    try {
+      // Gọi API cập nhật
+      const { code, message, result } = await updateDepartment(
+        editingDepartment.id,
+        editingDepartment
+      );
+      console.log("Updating department:", code, message, result);
+
+      if (code === 0) {
+        setDepartments((prev) =>
+          prev.map((dept) => (dept.id === result.id ? result : dept))
+        );
+        toast({
+          title: "Thành công!",
+          description: " Cập nhật chuyên khoa thành công!",
+          variant: "default",
+        });
+      } else {
+        throw new Error(message || "Cập nhật chuyên khoa thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật chuyên khoa:", error);
+      toast({
+        title: "Thất bại!",
+        description:
+          error instanceof Error ? error.message : "Cập nhật thất bại!",
+        variant: "destructive",
+      });
+    } finally {
+      setEditingDepartment(null);
+    }
   };
 
   const handleDeleteDepartment = () => {
@@ -194,7 +278,13 @@ export function DepartmentsManagement() {
     );
     setDeletingDepartment(null);
   };
-
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   const stripHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, "");
   };
@@ -407,7 +497,7 @@ export function DepartmentsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDepartments.map((department) => (
+                {departments.map((department) => (
                   <TableRow key={department.id}>
                     <TableCell className="font-medium">
                       {department.name}
@@ -459,7 +549,7 @@ export function DepartmentsManagement() {
           </div>
 
           {/* No results */}
-          {filteredDepartments.length === 0 && (
+          {departments.length === 0 && (
             <div className="text-center py-12">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -472,6 +562,99 @@ export function DepartmentsManagement() {
           )}
         </CardContent>
       </Card>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, departments.length)} trong
+            tổng số {totalItems} chuyên khoa
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* View Dialog */}
       {viewingDepartment && (
