@@ -18,12 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getDoctors } from "@/services";
 import type {
-  Achievement,
   Department,
   Doctor,
-  Education,
-  Experience,
   Position,
   Title,
   WorkingHour,
@@ -47,7 +45,11 @@ import {
   Stethoscope,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  DoctorsErrorFallback,
+  DoctorsLoadingSkeleton,
+} from "./doctors-skeleton";
 import { EditDoctorForm } from "./edit-doctor";
 import DoctorForm from "./new-doctor";
 
@@ -332,21 +334,6 @@ const generateMockDoctors = (count: number): Doctor[] => {
 
 const mockDoctors: Doctor[] = generateMockDoctors(50); // Generate 50 doctors for testing
 
-const specialtyOptions = [
-  "Tim mạch can thiệp",
-  "Phòng ngừa bệnh tim",
-  "Nhi sơ sinh",
-  "Cấp cứu nhi",
-  "Cấp cứu chấn thương",
-  "Hồi sức",
-  "Phẫu thuật nội soi",
-  "Phẫu thuật tái tạo",
-  "Chẩn đoán hình ảnh",
-  "Siêu âm",
-  "Nội khoa tổng quát",
-  "Quản lý bệnh mãn tính",
-];
-
 const dayOfWeekOptions = [
   { value: "MONDAY", label: "Thứ 2" },
   { value: "TUESDAY", label: "Thứ 3" },
@@ -357,20 +344,18 @@ const dayOfWeekOptions = [
   { value: "SUNDAY", label: "Chủ nhật" },
 ];
 
-const achievementTypes = [
-  { value: "AWARD", label: "Giải thưởng" },
-  { value: "CERTIFICATION", label: "Chứng chỉ" },
-  { value: "PUBLICATION", label: "Xuất bản" },
-  { value: "RESEARCH", label: "Nghiên cứu" },
-];
-
 export function DoctorsManagement() {
   const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
+  const [currentDoctors, setCurrentDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -402,37 +387,35 @@ export function DoctorsManagement() {
     })),
   });
 
-  // Filter doctors
-  const filteredDoctors = doctors.filter((doctor) => {
-    const matchesSearch =
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doctor.specialties &&
-        doctor.specialties.some((specialty) =>
-          specialty.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )) ||
-      (doctor.languages &&
-        doctor.languages.some((language) =>
-          language.toLowerCase().includes(searchTerm.toLowerCase())
-        ));
-    const matchesStatus =
-      statusFilter === "ALL" || doctor.status === statusFilter;
-    const matchesDepartment =
-      departmentFilter === "ALL" ||
-      doctor.department.id.toString() === departmentFilter;
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const data = await getDoctors(
+          currentPage - 1,
+          itemsPerPage,
+          searchTerm,
+          statusFilter,
+          departmentFilter !== "ALL" ? +departmentFilter : undefined
+        );
+        console.log("Fetched doctors:", data);
 
-    return matchesSearch && matchesStatus && matchesDepartment;
-  });
+        setDoctors(data.items || []);
+        setCurrentDoctors(data.items || []);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách bác sĩ:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Pagination logic
-  const indexOfLastDoctor = currentPage * itemsPerPage;
-  const indexOfFirstDoctor = indexOfLastDoctor - itemsPerPage;
-  const currentDoctors = filteredDoctors.slice(
-    indexOfFirstDoctor,
-    indexOfLastDoctor
-  );
-  const totalPages = Math.ceil(filteredDoctors.length / itemsPerPage);
+    fetchDoctors();
+  }, [currentPage, itemsPerPage]);
+
+  if (loading) return <DoctorsLoadingSkeleton />;
+  if (error) return <DoctorsErrorFallback />;
 
   // Change page
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
@@ -607,9 +590,7 @@ export function DoctorsManagement() {
                 <p className="text-sm font-medium text-gray-600">
                   Tổng số bác sĩ
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {filteredDoctors.length}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{totalItems}</p>
               </div>
             </div>
           </CardContent>
@@ -621,7 +602,7 @@ export function DoctorsManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Hoạt động</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {filteredDoctors.filter((d) => d.status === "ACTIVE").length}
+                  {doctors.filter((d) => d.status === "ACTIVE").length}
                 </p>
               </div>
             </div>
@@ -636,10 +617,7 @@ export function DoctorsManagement() {
                   Ngừng hoạt động
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {
-                    filteredDoctors.filter((d) => d.status === "INACTIVE")
-                      .length
-                  }
+                  {doctors.filter((d) => d.status === "INACTIVE").length}
                 </p>
               </div>
             </div>
@@ -830,9 +808,9 @@ export function DoctorsManagement() {
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-600">
-                Hiển thị {indexOfFirstDoctor + 1} -{" "}
-                {Math.min(indexOfLastDoctor, filteredDoctors.length)} trong tổng
-                số {filteredDoctors.length} bác sĩ
+                Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+                {Math.min(currentPage * itemsPerPage, doctors.length)} trong
+                tổng số {totalItems} bác sĩ
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -905,7 +883,7 @@ export function DoctorsManagement() {
       )}
 
       {/* No results */}
-      {filteredDoctors.length === 0 && (
+      {doctors.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
             <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -927,697 +905,6 @@ export function DoctorsManagement() {
           setEditingDoctor={setEditingDoctor}
           updateDoctor={handleUpdateDoctor}
         />
-        // <Dialog
-        //   open={!!editingDoctor}
-        //   onOpenChange={() => setEditingDoctor(null)}
-        // >
-        //   <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        //     <DialogHeader>
-        //       <DialogTitle>Chỉnh sửa thông tin bác sĩ</DialogTitle>
-        //       <DialogDescription>
-        //         Cập nhật thông tin bác sĩ để lưu thay đổi vào hệ thống.
-        //       </DialogDescription>
-        //     </DialogHeader>
-        //     <Tabs defaultValue="basic" className="w-full">
-        //       <TabsList className="grid w-full grid-cols-5">
-        //         <TabsTrigger value="basic">Cơ bản</TabsTrigger>
-        //         <TabsTrigger value="education">Học vấn</TabsTrigger>
-        //         <TabsTrigger value="experience">Kinh nghiệm</TabsTrigger>
-        //         <TabsTrigger value="achievements">Thành tích</TabsTrigger>
-        //         <TabsTrigger value="schedule">Lịch làm việc</TabsTrigger>
-        //       </TabsList>
-
-        //       <TabsContent value="basic" className="space-y-4">
-        //         <div className="grid gap-4">
-        //           <div className="grid gap-2">
-        //             <Label htmlFor="edit-name">Họ và tên</Label>
-        //             <Input
-        //               id="edit-name"
-        //               value={editingDoctor.name}
-        //               onChange={(e) =>
-        //                 setEditingDoctor({
-        //                   ...editingDoctor,
-        //                   name: e.target.value,
-        //                 })
-        //               }
-        //             />
-        //           </div>
-        //           <div className="grid gap-2">
-        //             <Label htmlFor="edit-avatarUrl">Ảnh đại diện</Label>
-        //             <Input
-        //               id="edit-avatarUrl"
-        //               value={editingDoctor.avatarUrl}
-        //               onChange={(e) =>
-        //                 setEditingDoctor({
-        //                   ...editingDoctor,
-        //                   avatarUrl: e.target.value,
-        //                 })
-        //               }
-        //             />
-        //           </div>
-        //           <div className="grid gap-2">
-        //             <Label htmlFor="edit-introduction">Mô tả</Label>
-        //             <Textarea
-        //               id="edit-introduction"
-        //               value={editingDoctor.introduction}
-        //               onChange={(e) =>
-        //                 setEditingDoctor({
-        //                   ...editingDoctor,
-        //                   introduction: e.target.value,
-        //                 })
-        //               }
-        //               rows={3}
-        //             />
-        //           </div>
-        //           <div className="grid grid-cols-2 gap-4">
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-experience">
-        //                 Số năm kinh nghiệm
-        //               </Label>
-        //               <Input
-        //                 id="edit-experience"
-        //                 value={editingDoctor.experience_years}
-        //                 onChange={(e) =>
-        //                   setEditingDoctor({
-        //                     ...editingDoctor,
-        //                     experience_years: e.target.value,
-        //                   })
-        //                 }
-        //               />
-        //             </div>
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-rating">Đánh giá (1-5)</Label>
-        //               <Input
-        //                 id="edit-rating"
-        //                 type="number"
-        //                 min="0"
-        //                 max="5"
-        //                 step="0.1"
-        //                 value={editingDoctor.rating}
-        //                 onChange={(e) =>
-        //                   setEditingDoctor({
-        //                     ...editingDoctor,
-        //                     rating: Number.parseFloat(e.target.value),
-        //                   })
-        //                 }
-        //               />
-        //             </div>
-        //           </div>
-        //           <div className="grid grid-cols-2 gap-4">
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-phone">Số điện thoại</Label>
-        //               <Input
-        //                 id="edit-phone"
-        //                 value={editingDoctor.phone}
-        //                 onChange={(e) =>
-        //                   setEditingDoctor({
-        //                     ...editingDoctor,
-        //                     phone: e.target.value,
-        //                   })
-        //                 }
-        //               />
-        //             </div>
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-email">Email</Label>
-        //               <Input
-        //                 id="edit-email"
-        //                 type="email"
-        //                 value={editingDoctor.email}
-        //                 onChange={(e) =>
-        //                   setEditingDoctor({
-        //                     ...editingDoctor,
-        //                     email: e.target.value,
-        //                   })
-        //                 }
-        //               />
-        //             </div>
-        //           </div>
-        //           <div className="grid gap-2">
-        //             <Label htmlFor="edit-consultationFee">Phí khám (VNĐ)</Label>
-        //             <Input
-        //               id="edit-consultationFee"
-        //               type="number"
-        //               value={editingDoctor.consultationFee}
-        //               onChange={(e) =>
-        //                 setEditingDoctor({
-        //                   ...editingDoctor,
-        //                   consultationFee: Number.parseInt(e.target.value),
-        //                 })
-        //               }
-        //             />
-        //           </div>
-        //           <div className="grid gap-2">
-        //             <Label htmlFor="edit-specialties">Chuyên môn</Label>
-        //             <MultiSelect
-        //               options={specialtyOptions}
-        //               value={(editingDoctor.specialties || []).map((s) =>
-        //                 typeof s === "string" ? s : s.name
-        //               )}
-        //               onChange={(value) =>
-        //                 setEditingDoctor({
-        //                   ...editingDoctor,
-        //                   specialties: value.map((name) => ({
-        //                     id: Date.now() + Math.random(),
-        //                     name,
-        //                     status: "ACTIVE",
-        //                     description: name,
-        //                   })),
-        //                 })
-        //               }
-        //               placeholder="Chọn chuyên môn"
-        //             />
-        //           </div>
-        //           <div className="grid gap-2">
-        //             <Label htmlFor="edit-languages">Ngôn ngữ</Label>
-        //             <Input
-        //               id="edit-languages"
-        //               value={
-        //                 editingDoctor.languages
-        //                   ? editingDoctor.languages.join(", ")
-        //                   : ""
-        //               }
-        //               onChange={(e) =>
-        //                 setEditingDoctor({
-        //                   ...editingDoctor,
-        //                   languages: e.target.value
-        //                     .split(",")
-        //                     .map((l) => l.trim())
-        //                     .filter((l) => l),
-        //                 })
-        //               }
-        //               placeholder="Tiếng Việt, English, 中文"
-        //             />
-        //           </div>
-        //           <div className="grid grid-cols-3 gap-4">
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-title">Chức danh</Label>
-        //               <Select
-        //                 value={editingDoctor.title.id.toString()}
-        //                 onValueChange={(value) => {
-        //                   const title = mockTitles.find(
-        //                     (t) => t.id.toString() === value
-        //                   );
-        //                   if (title)
-        //                     setEditingDoctor({ ...editingDoctor, title });
-        //                 }}
-        //               >
-        //                 <SelectTrigger>
-        //                   <SelectValue />
-        //                 </SelectTrigger>
-        //                 <SelectContent>
-        //                   {mockTitles.map((title) => (
-        //                     <SelectItem
-        //                       key={title.id}
-        //                       value={title.id.toString()}
-        //                     >
-        //                       {title.name}
-        //                     </SelectItem>
-        //                   ))}
-        //                 </SelectContent>
-        //               </Select>
-        //             </div>
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-department">Chuyên khoa</Label>
-        //               <Select
-        //                 value={editingDoctor.department.id.toString()}
-        //                 onValueChange={(value) => {
-        //                   const department = mockDepartments.find(
-        //                     (d) => d.id.toString() === value
-        //                   );
-        //                   if (department)
-        //                     setEditingDoctor({ ...editingDoctor, department });
-        //                 }}
-        //               >
-        //                 <SelectTrigger>
-        //                   <SelectValue />
-        //                 </SelectTrigger>
-        //                 <SelectContent>
-        //                   {mockDepartments.map((dept) => (
-        //                     <SelectItem
-        //                       key={dept.id}
-        //                       value={dept.id.toString()}
-        //                     >
-        //                       {dept.name}
-        //                     </SelectItem>
-        //                   ))}
-        //                 </SelectContent>
-        //               </Select>
-        //             </div>
-        //             <div className="grid gap-2">
-        //               <Label htmlFor="edit-position">Chức vụ</Label>
-        //               <Select
-        //                 value={editingDoctor.position.id.toString()}
-        //                 onValueChange={(value) => {
-        //                   const position = mockPositions.find(
-        //                     (p) => p.id.toString() === value
-        //                   );
-        //                   if (position)
-        //                     setEditingDoctor({ ...editingDoctor, position });
-        //                 }}
-        //               >
-        //                 <SelectTrigger>
-        //                   <SelectValue />
-        //                 </SelectTrigger>
-        //                 <SelectContent>
-        //                   {mockPositions.map((pos) => (
-        //                     <SelectItem key={pos.id} value={pos.id.toString()}>
-        //                       {pos.name}
-        //                     </SelectItem>
-        //                   ))}
-        //                 </SelectContent>
-        //               </Select>
-        //             </div>
-        //           </div>
-        //         </div>
-        //       </TabsContent>
-
-        //       <TabsContent value="education" className="space-y-4">
-        //         <div className="flex justify-between items-center">
-        //           <h3 className="text-lg font-medium">Học vấn</h3>
-        //           <Button
-        //             type="button"
-        //             onClick={() =>
-        //               addEducation(editingDoctor, setEditingDoctor)
-        //             }
-        //             size="sm"
-        //           >
-        //             <Plus className="h-4 w-4 mr-2" />
-        //             Thêm học vấn
-        //           </Button>
-        //         </div>
-        //         {editingDoctor.education?.map((edu, index) => (
-        //           <Card key={edu.id} className="p-4">
-        //             <div className="grid gap-4">
-        //               <div className="flex justify-between items-center">
-        //                 <h4 className="font-medium">Học vấn {index + 1}</h4>
-        //                 <Button
-        //                   type="button"
-        //                   variant="ghost"
-        //                   size="sm"
-        //                   onClick={() =>
-        //                     removeEducation(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index
-        //                     )
-        //                   }
-        //                 >
-        //                   <Trash2 className="h-4 w-4" />
-        //                 </Button>
-        //               </div>
-        //               <div className="grid grid-cols-2 gap-4">
-        //                 <div className="grid gap-2">
-        //                   <Label>Bằng cấp</Label>
-        //                   <Input
-        //                     value={edu.degree}
-        //                     onChange={(e) =>
-        //                       updateEducation(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "degree",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="Bác sĩ Đa khoa"
-        //                   />
-        //                 </div>
-        //                 <div className="grid gap-2">
-        //                   <Label>Trường học</Label>
-        //                   <Input
-        //                     value={edu.institution}
-        //                     onChange={(e) =>
-        //                       updateEducation(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "institution",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="Đại học Y Hà Nội"
-        //                   />
-        //                 </div>
-        //               </div>
-        //               <div className="grid gap-2">
-        //                 <Label>Năm tốt nghiệp</Label>
-        //                 <Input
-        //                   value={edu.year}
-        //                   onChange={(e) =>
-        //                     updateEducation(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index,
-        //                       "year",
-        //                       e.target.value
-        //                     )
-        //                   }
-        //                   placeholder="2020"
-        //                 />
-        //               </div>
-        //               <div className="grid gap-2">
-        //                 <Label>Mô tả</Label>
-        //                 <Textarea
-        //                   value={edu.description}
-        //                   onChange={(e) =>
-        //                     updateEducation(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index,
-        //                       "description",
-        //                       e.target.value
-        //                     )
-        //                   }
-        //                   placeholder="Tốt nghiệp loại Giỏi"
-        //                   rows={2}
-        //                 />
-        //               </div>
-        //             </div>
-        //           </Card>
-        //         ))}
-        //       </TabsContent>
-
-        //       <TabsContent value="experience" className="space-y-4">
-        //         <div className="flex justify-between items-center">
-        //           <h3 className="text-lg font-medium">Kinh nghiệm làm việc</h3>
-        //           <Button
-        //             type="button"
-        //             onClick={() =>
-        //               addWorkExperience(editingDoctor, setEditingDoctor)
-        //             }
-        //             size="sm"
-        //           >
-        //             <Plus className="h-4 w-4 mr-2" />
-        //             Thêm kinh nghiệm
-        //           </Button>
-        //         </div>
-        //         {editingDoctor.workExperience?.map((exp, index) => (
-        //           <Card key={exp.id} className="p-4">
-        //             <div className="grid gap-4">
-        //               <div className="flex justify-between items-center">
-        //                 <h4 className="font-medium">Kinh nghiệm {index + 1}</h4>
-        //                 <Button
-        //                   type="button"
-        //                   variant="ghost"
-        //                   size="sm"
-        //                   onClick={() =>
-        //                     removeWorkExperience(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index
-        //                     )
-        //                   }
-        //                 >
-        //                   <Trash2 className="h-4 w-4" />
-        //                 </Button>
-        //               </div>
-        //               <div className="grid grid-cols-2 gap-4">
-        //                 <div className="grid gap-2">
-        //                   <Label>Chức vụ</Label>
-        //                   <Input
-        //                     value={exp.position}
-        //                     onChange={(e) =>
-        //                       updateWorkExperience(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "position",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="Trưởng khoa Tim mạch"
-        //                   />
-        //                 </div>
-        //                 <div className="grid gap-2">
-        //                   <Label>Tổ chức</Label>
-        //                   <Input
-        //                     value={exp.organization}
-        //                     onChange={(e) =>
-        //                       updateWorkExperience(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "organization",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="Bệnh viện ABC"
-        //                   />
-        //                 </div>
-        //               </div>
-        //               <div className="grid grid-cols-2 gap-4">
-        //                 <div className="grid gap-2">
-        //                   <Label>Năm bắt đầu</Label>
-        //                   <Input
-        //                     value={exp.startYear}
-        //                     onChange={(e) =>
-        //                       updateWorkExperience(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "startYear",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="2020"
-        //                   />
-        //                 </div>
-        //                 <div className="grid gap-2">
-        //                   <Label>Năm kết thúc</Label>
-        //                   <Input
-        //                     value={exp.endYear || ""}
-        //                     onChange={(e) =>
-        //                       updateWorkExperience(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "endYear",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="2023 (để trống nếu hiện tại)"
-        //                   />
-        //                 </div>
-        //               </div>
-        //               <div className="grid gap-2">
-        //                 <Label>Mô tả</Label>
-        //                 <Textarea
-        //                   value={exp.description}
-        //                   onChange={(e) =>
-        //                     updateWorkExperience(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index,
-        //                       "description",
-        //                       e.target.value
-        //                     )
-        //                   }
-        //                   placeholder="Mô tả công việc và trách nhiệm"
-        //                   rows={2}
-        //                 />
-        //               </div>
-        //             </div>
-        //           </Card>
-        //         ))}
-        //       </TabsContent>
-
-        //       <TabsContent value="achievements" className="space-y-4">
-        //         <div className="flex justify-between items-center">
-        //           <h3 className="text-lg font-medium">
-        //             Thành tích & Giải thưởng
-        //           </h3>
-        //           <Button
-        //             type="button"
-        //             onClick={() =>
-        //               addAchievement(editingDoctor, setEditingDoctor)
-        //             }
-        //             size="sm"
-        //           >
-        //             <Plus className="h-4 w-4 mr-2" />
-        //             Thêm thành tích
-        //           </Button>
-        //         </div>
-        //         {editingDoctor.achievements?.map((achievement, index) => (
-        //           <Card key={achievement.id} className="p-4">
-        //             <div className="grid gap-4">
-        //               <div className="flex justify-between items-center">
-        //                 <h4 className="font-medium">Thành tích {index + 1}</h4>
-        //                 <Button
-        //                   type="button"
-        //                   variant="ghost"
-        //                   size="sm"
-        //                   onClick={() =>
-        //                     removeAchievement(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index
-        //                     )
-        //                   }
-        //                 >
-        //                   <Trash2 className="h-4 w-4" />
-        //                 </Button>
-        //               </div>
-        //               <div className="grid grid-cols-2 gap-4">
-        //                 <div className="grid gap-2">
-        //                   <Label>Tiêu đề</Label>
-        //                   <Input
-        //                     value={achievement.title}
-        //                     onChange={(e) =>
-        //                       updateAchievement(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "title",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="Thầy thuốc trẻ xuất sắc"
-        //                   />
-        //                 </div>
-        //                 <div className="grid gap-2">
-        //                   <Label>Năm</Label>
-        //                   <Input
-        //                     value={achievement.year}
-        //                     onChange={(e) =>
-        //                       updateAchievement(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "year",
-        //                         e.target.value
-        //                       )
-        //                     }
-        //                     placeholder="2023"
-        //                   />
-        //                 </div>
-        //               </div>
-        //               <div className="grid gap-2">
-        //                 <Label>Loại</Label>
-        //                 <Select
-        //                   value={achievement.type}
-        //                   onValueChange={(value) =>
-        //                     updateAchievement(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index,
-        //                       "type",
-        //                       value as Achievement["type"]
-        //                     )
-        //                   }
-        //                 >
-        //                   <SelectTrigger>
-        //                     <SelectValue />
-        //                   </SelectTrigger>
-        //                   <SelectContent>
-        //                     {achievementTypes.map((type) => (
-        //                       <SelectItem key={type.value} value={type.value}>
-        //                         {type.label}
-        //                       </SelectItem>
-        //                     ))}
-        //                   </SelectContent>
-        //                 </Select>
-        //               </div>
-        //               <div className="grid gap-2">
-        //                 <Label>Mô tả</Label>
-        //                 <Textarea
-        //                   value={achievement.description}
-        //                   onChange={(e) =>
-        //                     updateAchievement(
-        //                       editingDoctor,
-        //                       setEditingDoctor,
-        //                       index,
-        //                       "description",
-        //                       e.target.value
-        //                     )
-        //                   }
-        //                   placeholder="Mô tả chi tiết về thành tích"
-        //                   rows={2}
-        //                 />
-        //               </div>
-        //             </div>
-        //           </Card>
-        //         ))}
-        //       </TabsContent>
-
-        //       <TabsContent value="schedule" className="space-y-4">
-        //         <h3 className="text-lg font-medium">Lịch làm việc</h3>
-        //         {editingDoctor.workingHours?.map((hour, index) => (
-        //           <Card key={hour.id} className="p-4">
-        //             <div className="grid gap-4">
-        //               <div className="flex items-center justify-between">
-        //                 <h4 className="font-medium">
-        //                   {
-        //                     dayOfWeekOptions.find(
-        //                       (d) => d.value === hour.dayOfWeek
-        //                     )?.label
-        //                   }
-        //                 </h4>
-        //                 <div className="flex items-center space-x-2">
-        //                   <Label htmlFor={`edit-available-${index}`}>
-        //                     Có làm việc
-        //                   </Label>
-        //                   <input
-        //                     id={`edit-available-${index}`}
-        //                     type="checkbox"
-        //                     checked={hour.isAvailable}
-        //                     onChange={(e) =>
-        //                       updateWorkingHour(
-        //                         editingDoctor,
-        //                         setEditingDoctor,
-        //                         index,
-        //                         "isAvailable",
-        //                         e.target.checked
-        //                       )
-        //                     }
-        //                   />
-        //                 </div>
-        //               </div>
-        //               {hour.isAvailable && (
-        //                 <div className="grid grid-cols-2 gap-4">
-        //                   <div className="grid gap-2">
-        //                     <Label>Giờ bắt đầu</Label>
-        //                     <Input
-        //                       type="time"
-        //                       value={hour.startTime}
-        //                       onChange={(e) =>
-        //                         updateWorkingHour(
-        //                           editingDoctor,
-        //                           setEditingDoctor,
-        //                           index,
-        //                           "startTime",
-        //                           e.target.value
-        //                         )
-        //                       }
-        //                     />
-        //                   </div>
-        //                   <div className="grid gap-2">
-        //                     <Label>Giờ kết thúc</Label>
-        //                     <Input
-        //                       type="time"
-        //                       value={hour.endTime}
-        //                       onChange={(e) =>
-        //                         updateWorkingHour(
-        //                           editingDoctor,
-        //                           setEditingDoctor,
-        //                           index,
-        //                           "endTime",
-        //                           e.target.value
-        //                         )
-        //                       }
-        //                     />
-        //                   </div>
-        //                 </div>
-        //               )}
-        //             </div>
-        //           </Card>
-        //         ))}
-        //       </TabsContent>
-        //     </Tabs>
-        //     <DialogFooter>
-        //       <Button onClick={handleUpdateDoctor}>Cập nhật bác sĩ</Button>
-        //     </DialogFooter>
-        //   </DialogContent>
-        // </Dialog>
       )}
     </div>
   );
