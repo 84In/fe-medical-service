@@ -17,14 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  achievementTypes,
-  dayOfWeekOptions,
-  mockDepartments,
-  mockPositions,
-  mockTitles,
-  specialtyOptions,
-} from "./mockData";
+import { achievementTypes, dayOfWeekOptions } from "./mockData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Achievement, Doctor } from "@/types";
@@ -42,6 +35,9 @@ import {
   addAchievement,
 } from "@/utils/doctorUtils";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { ImageUpload } from "@/components/image-upload";
+import { useCallback } from "react";
+import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
 interface DoctorFormProps {
   editingDoctor: Doctor;
   setEditingDoctor: React.Dispatch<React.SetStateAction<Doctor | null>>;
@@ -52,6 +48,19 @@ export function EditDoctorForm({
   setEditingDoctor,
   updateDoctor,
 }: DoctorFormProps) {
+  const { departments, positions, titles, specialties, loading, refetch } =
+    useDoctorMetadata();
+
+  const editImage = useCallback(
+    (url: string) => {
+      if (!editingDoctor) return;
+      setEditingDoctor({
+        ...editingDoctor,
+        avatarUrl: url,
+      });
+    },
+    [editingDoctor]
+  );
   return (
     <Dialog open={!!editingDoctor} onOpenChange={() => setEditingDoctor(null)}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -61,8 +70,11 @@ export function EditDoctorForm({
             Cập nhật thông tin bác sĩ để lưu thay đổi vào hệ thống.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs
+          defaultValue="basic"
+          className="w-full flex flex-col gap-20 lg:gap-4"
+        >
+          <TabsList className="grid w-full gap-2 grid-cols-[repeat(auto-fit,minmax(120px,1fr))] ">
             <TabsTrigger value="basic">Cơ bản</TabsTrigger>
             <TabsTrigger value="education">Học vấn</TabsTrigger>
             <TabsTrigger value="experience">Kinh nghiệm</TabsTrigger>
@@ -70,7 +82,10 @@ export function EditDoctorForm({
             <TabsTrigger value="schedule">Lịch làm việc</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-4">
+          <TabsContent
+            value="basic"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-name">Họ và tên</Label>
@@ -87,15 +102,11 @@ export function EditDoctorForm({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-avatarUrl">Ảnh đại diện</Label>
-                <Input
-                  id="edit-avatarUrl"
-                  value={editingDoctor.avatarUrl}
-                  onChange={(e) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      avatarUrl: e.target.value,
-                    })
-                  }
+                <ImageUpload
+                  onImageSelect={editImage}
+                  initialImage={editingDoctor.avatarUrl}
+                  folder={"doctors"}
+                  maxSize={5}
                 />
               </div>
               <div className="grid gap-2">
@@ -112,39 +123,62 @@ export function EditDoctorForm({
                   rows={3}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-specialties">Chuyên môn</Label>
+                <MultiSelect
+                  disabled={loading}
+                  options={specialties.map((s) => s.name)}
+                  value={(editingDoctor.specialties || []).map((s) =>
+                    typeof s === "string" ? s : s.name
+                  )}
+                  onChange={(selectedNames) =>
+                    setEditingDoctor({
+                      ...editingDoctor,
+                      specialties: specialties.filter((s) =>
+                        selectedNames.includes(s.name)
+                      ),
+                    })
+                  }
+                  placeholder="Chọn chuyên môn"
+                />
+              </div>
+              <div className="grid gap-2  lg:grid-cols-2 lg:gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-experience">Số năm kinh nghiệm</Label>
                   <Input
                     id="edit-experience"
-                    value={editingDoctor.experience_years}
+                    value={editingDoctor.experienceYears}
                     onChange={(e) =>
                       setEditingDoctor({
                         ...editingDoctor,
-                        experience_years: e.target.value,
+                        experienceYears: e.target.value,
                       })
                     }
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-rating">Đánh giá (1-5)</Label>
-                  <Input
-                    id="edit-rating"
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={editingDoctor.rating}
-                    onChange={(e) =>
+                  <Label htmlFor="status">Trạng thái</Label>
+                  <Select
+                    value={editingDoctor.status}
+                    onValueChange={(value) =>
                       setEditingDoctor({
                         ...editingDoctor,
-                        rating: Number.parseFloat(e.target.value),
+                        status: value as Doctor["status"],
                       })
                     }
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                      <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
+                      <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2 lg:grid-cols-2 lg:gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-phone">Số điện thoại</Label>
                   <Input
@@ -173,79 +207,27 @@ export function EditDoctorForm({
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-consultationFee">Phí khám (VNĐ)</Label>
-                <Input
-                  id="edit-consultationFee"
-                  type="number"
-                  value={editingDoctor.consultationFee}
-                  onChange={(e) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      consultationFee: Number.parseInt(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-specialties">Chuyên môn</Label>
-                <MultiSelect
-                  options={specialtyOptions}
-                  value={(editingDoctor.specialties || []).map((s) =>
-                    typeof s === "string" ? s : s.name
-                  )}
-                  onChange={(value) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      specialties: value.map((name) => ({
-                        id: Date.now() + Math.random(),
-                        name,
-                        status: "ACTIVE",
-                        description: name,
-                      })),
-                    })
-                  }
-                  placeholder="Chọn chuyên môn"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-languages">Ngôn ngữ</Label>
-                <Input
-                  id="edit-languages"
-                  value={
-                    editingDoctor.languages
-                      ? editingDoctor.languages.join(", ")
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setEditingDoctor({
-                      ...editingDoctor,
-                      languages: e.target.value
-                        .split(",")
-                        .map((l) => l.trim())
-                        .filter((l) => l),
-                    })
-                  }
-                  placeholder="Tiếng Việt, English, 中文"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
+
+              <div className="grid gap-2 lg:grid-cols-3 lg:gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-title">Chức danh</Label>
                   <Select
+                    disabled={loading}
                     value={editingDoctor.title.id.toString()}
                     onValueChange={(value) => {
-                      const title = mockTitles.find(
+                      const title = titles.find(
                         (t) => t.id.toString() === value
                       );
-                      if (title) setEditingDoctor({ ...editingDoctor, title });
+                      if (title) {
+                        setEditingDoctor({ ...editingDoctor, title });
+                      }
                     }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockTitles.map((title) => (
+                      {titles.map((title) => (
                         <SelectItem key={title.id} value={title.id.toString()}>
                           {title.name}
                         </SelectItem>
@@ -258,18 +240,19 @@ export function EditDoctorForm({
                   <Select
                     value={editingDoctor.department.id.toString()}
                     onValueChange={(value) => {
-                      const department = mockDepartments.find(
+                      const department = departments.find(
                         (d) => d.id.toString() === value
                       );
-                      if (department)
+                      if (department) {
                         setEditingDoctor({ ...editingDoctor, department });
+                      }
                     }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockDepartments.map((dept) => (
+                      {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id.toString()}>
                           {dept.name}
                         </SelectItem>
@@ -282,7 +265,7 @@ export function EditDoctorForm({
                   <Select
                     value={editingDoctor.position.id.toString()}
                     onValueChange={(value) => {
-                      const position = mockPositions.find(
+                      const position = positions.find(
                         (p) => p.id.toString() === value
                       );
                       if (position)
@@ -293,7 +276,7 @@ export function EditDoctorForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockPositions.map((pos) => (
+                      {positions.map((pos) => (
                         <SelectItem key={pos.id} value={pos.id.toString()}>
                           {pos.name}
                         </SelectItem>
@@ -305,7 +288,10 @@ export function EditDoctorForm({
             </div>
           </TabsContent>
 
-          <TabsContent value="education" className="space-y-4">
+          <TabsContent
+            value="education"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Học vấn</h3>
               <Button
@@ -405,7 +391,10 @@ export function EditDoctorForm({
             ))}
           </TabsContent>
 
-          <TabsContent value="experience" className="space-y-4">
+          <TabsContent
+            value="experience"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Kinh nghiệm làm việc</h3>
               <Button
@@ -529,7 +518,10 @@ export function EditDoctorForm({
             ))}
           </TabsContent>
 
-          <TabsContent value="achievements" className="space-y-4">
+          <TabsContent
+            value="achievements"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Thành tích & Giải thưởng</h3>
               <Button
@@ -643,7 +635,10 @@ export function EditDoctorForm({
             ))}
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-4">
+          <TabsContent
+            value="schedule"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <h3 className="text-lg font-medium">Lịch làm việc</h3>
             {editingDoctor.workingHours?.map((hour, index) => (
               <Card key={hour.id} className="p-4">

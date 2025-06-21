@@ -18,14 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDoctors } from "@/services";
-import type {
-  Department,
-  Doctor,
-  Position,
-  Title,
-  WorkingHour,
-} from "@/types/doctor";
+import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
+import { addDoctor, getDoctors, updateDoctor } from "@/services";
+import type { Doctor, WorkingHour } from "@/types/doctor";
 import {
   Award,
   Calendar,
@@ -41,7 +36,6 @@ import {
   MoreVertical,
   Phone,
   Search,
-  Star,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -52,287 +46,7 @@ import {
 } from "./doctors-skeleton";
 import { EditDoctorForm } from "./edit-doctor";
 import DoctorForm from "./new-doctor";
-
-// Mock data
-const mockDepartments: Department[] = [
-  {
-    id: 1,
-    name: "Tim mạch",
-    contentHtml: "<p>Tim và chăm sóc tim mạch</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Nhi khoa",
-    contentHtml: "<p>Chăm sóc sức khỏe trẻ em</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Cấp cứu",
-    contentHtml: "<p>Chăm sóc y tế khẩn cấp</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Phẫu thuật",
-    contentHtml: "<p>Cung cấp y khoa phẫu thuật</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "X quang",
-    contentHtml: "<p>Chẩn đoán hình ảnh</p>",
-    status: "ACTIVE",
-  },
-];
-
-const mockPositions: Position[] = [
-  {
-    id: 1,
-    name: "Giám đốc",
-    description: "Giám đốc bệnh viện",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Phó giám đốc",
-    description: "Phó giám đốc bệnh viện",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Bác sĩ chuyên khoa",
-    description: "Bác sĩ chuyên khoa",
-    status: "ACTIVE",
-  },
-  { id: 4, name: "Trưởng khoa", description: "Trường khoa", status: "ACTIVE" },
-];
-
-const mockTitles: Title[] = [
-  { id: 1, name: "BS.", description: "Bác sĩ", status: "ACTIVE" },
-  { id: 2, name: "GS.", description: "Giáo sư", status: "ACTIVE" },
-  {
-    id: 3,
-    name: "PGS.",
-    description: "Phó giáo sư",
-    status: "ACTIVE",
-  },
-];
-
-// Generate more mock doctors for pagination testing
-const generateMockDoctors = (count: number): Doctor[] => {
-  const baseMockDoctor = {
-    id: 1,
-    name: "Sarah Johnson",
-    avatarUrl: "/placeholder.svg?height=100&width=100",
-    introduction:
-      "Bác sĩ tim mạch giàu kinh nghiệm, chuyên về tim mạch can thiệp và phòng ngừa bệnh tim.",
-    experience_years: "15",
-    status: "ACTIVE",
-    department: mockDepartments[0],
-    position: mockPositions[0],
-    title: mockTitles[1],
-    phone: "0123-456-789",
-    email: "sarah.johnson@hospital.com",
-    specialties: [
-      {
-        id: 1,
-        name: "Phẫu thuật tim",
-        status: "ACTIVE" as const,
-        description: "Phẫu thuật tim",
-      },
-      {
-        id: 2,
-        name: "Siêu âm tim",
-        status: "ACTIVE" as const,
-        description: "Siêu âm tim",
-      },
-    ],
-    languages: ["Tiếng Việt", "English"],
-    consultationFee: 500000,
-    rating: 4.5,
-    education: [
-      {
-        id: 1,
-        degree: "Bác sĩ Đa khoa",
-        institution: "Đại học Y Hà Nội",
-        year: "1998",
-        description: "Tốt nghiệp loại Giỏi",
-      },
-      {
-        id: 2,
-        degree: "Chuyên khoa I Tim mạch",
-        institution: "Bệnh viện Bạch Mai",
-        year: "2003",
-        description: "Chuyên sâu về tim mạch can thiệp",
-      },
-    ],
-    workExperience: [
-      {
-        id: 1,
-        position: "Trưởng khoa Tim mạch",
-        organization: "VitaCare Medical",
-        startYear: "2020",
-        description: "Quản lý và điều hành khoa Tim mạch",
-      },
-      {
-        id: 2,
-        position: "Phó trưởng khoa Tim mạch",
-        organization: "Bệnh viện Bạch Mai",
-        startYear: "2015",
-        endYear: "2020",
-        description: "Hỗ trợ quản lý và điều trị bệnh nhân",
-      },
-    ],
-    achievements: [
-      {
-        id: 1,
-        title: "Thầy thuốc trẻ xuất sắc",
-        year: "2018",
-        type: "AWARD" as const,
-        description: "Giải thưởng của Bộ Y tế",
-      },
-      {
-        id: 2,
-        title: "Chứng chỉ Can thiệp tim mạch",
-        year: "2012",
-        type: "CERTIFICATION" as const,
-        description: "Chứng chỉ quốc tế từ Hoa Kỳ",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "08:00",
-        endTime: "12:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        startTime: "08:00",
-        endTime: "12:00",
-        isAvailable: true,
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        startTime: "",
-        endTime: "",
-        isAvailable: false,
-      },
-    ],
-  };
-
-  // Vietnamese names for doctors
-  const vietnameseNames = [
-    "Nguyễn Văn An",
-    "Trần Thị Bình",
-    "Lê Minh Cường",
-    "Phạm Thanh Dung",
-    "Hoàng Văn Em",
-    "Vũ Thị Phương",
-    "Đặng Minh Giang",
-    "Bùi Thị Hoa",
-    "Đỗ Văn Hùng",
-    "Ngô Thị Lan",
-    "Dương Văn Minh",
-    "Lý Thị Ngọc",
-    "Hồ Văn Phong",
-    "Mai Thị Quỳnh",
-    "Trịnh Văn Sơn",
-    "Võ Thị Tâm",
-    "Đinh Văn Uy",
-    "Lương Thị Vân",
-    "Phan Văn Xuân",
-    "Tạ Thị Yến",
-  ];
-
-  // Generate doctors
-  return Array.from({ length: count }).map((_, index) => {
-    const departmentIndex = index % mockDepartments.length;
-    const positionIndex = index % mockPositions.length;
-    const titleIndex = index % mockTitles.length;
-    const nameIndex = index % vietnameseNames.length;
-    const rating = Math.min(5, Math.max(3, 3.5 + Math.random() * 1.5));
-    const experience = Math.floor(5 + Math.random() * 20).toString();
-    const fee = Math.floor(300000 + Math.random() * 700000);
-
-    return {
-      ...baseMockDoctor,
-      id: index + 1,
-      name: vietnameseNames[nameIndex],
-      department: mockDepartments[departmentIndex],
-      position: mockPositions[positionIndex],
-      title: mockTitles[titleIndex],
-      experience_years: experience,
-      rating: Number.parseFloat(rating.toFixed(1)),
-      consultationFee: fee,
-      email: `doctor${index + 1}@hospital.com`,
-      phone: `0${Math.floor(Math.random() * 900000000) + 100000000}`,
-      status:
-        index % 10 === 0
-          ? ("INACTIVE" as const)
-          : index % 15 === 0
-          ? ("HIDDEN" as const)
-          : ("ACTIVE" as const),
-      specialties: [
-        {
-          id: 1,
-          name: "Phẫu thuật tim",
-          status: "ACTIVE" as const,
-          description: "Phẫu thuật tim",
-        },
-        {
-          id: 2,
-          name: "Siêu âm tim",
-          status: "ACTIVE" as const,
-          description: "Siêu âm tim",
-        },
-      ],
-      achievements: baseMockDoctor.achievements.map((a) => ({
-        ...a,
-        type: a.type as "AWARD" | "CERTIFICATION" | "PUBLICATION" | "RESEARCH",
-      })),
-      workingHours: baseMockDoctor.workingHours.map((wh) => ({
-        ...wh,
-        dayOfWeek: wh.dayOfWeek as WorkingHour["dayOfWeek"],
-      })),
-    };
-  });
-};
-
-const mockDoctors: Doctor[] = generateMockDoctors(50); // Generate 50 doctors for testing
+import { toast } from "@/hooks/use-toast";
 
 const dayOfWeekOptions = [
   { value: "MONDAY", label: "Thứ 2" },
@@ -345,14 +59,14 @@ const dayOfWeekOptions = [
 ];
 
 export function DoctorsManagement() {
-  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
-  const [currentDoctors, setCurrentDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { departments } = useDoctorMetadata();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -364,7 +78,7 @@ export function DoctorsManagement() {
     name: "",
     avatarUrl: "",
     introduction: "",
-    experience_years: "",
+    experienceYears: "",
     status: "ACTIVE",
     department: undefined,
     position: undefined,
@@ -372,9 +86,6 @@ export function DoctorsManagement() {
     phone: "",
     email: "",
     specialties: [],
-    languages: [],
-    consultationFee: 0,
-    rating: 0,
     education: [],
     workExperience: [],
     achievements: [],
@@ -400,7 +111,6 @@ export function DoctorsManagement() {
         console.log("Fetched doctors:", data);
 
         setDoctors(data.items || []);
-        setCurrentDoctors(data.items || []);
         setTotalPages(data.totalPages);
         setTotalItems(data.totalItems);
       } catch (error) {
@@ -410,9 +120,12 @@ export function DoctorsManagement() {
         setLoading(false);
       }
     };
+    const handler = setTimeout(() => {
+      fetchDoctors();
+    }, 500);
 
-    fetchDoctors();
-  }, [currentPage, itemsPerPage]);
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, departmentFilter]);
 
   if (loading) return <DoctorsLoadingSkeleton />;
   if (error) return <DoctorsErrorFallback />;
@@ -441,41 +154,6 @@ export function DoctorsManagement() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
-  const renderRatingStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-      );
-    }
-
-    if (hasHalfStar) {
-      stars.push(
-        <Star
-          key="half"
-          className="h-3 w-3 fill-yellow-400/50 text-yellow-400"
-        />
-      );
-    }
-
-    const remainingStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="h-3 w-3 text-gray-300" />);
-    }
-
-    return stars;
-  };
-
   const handleEditDoctor = (doctor: Doctor) => {
     setEditingDoctor(doctor);
   };
@@ -487,16 +165,101 @@ export function DoctorsManagement() {
       )
     );
   };
+  function normalizeDoctorPayload(editingDoctor: any) {
+    return {
+      id: editingDoctor.id,
+      name: editingDoctor.name,
+      avatarUrl: editingDoctor.avatarUrl,
+      introduction: editingDoctor.introduction,
+      experienceYears: editingDoctor.experienceYears,
+      departmentId: editingDoctor.department?.id ?? null,
+      positionId: editingDoctor.position?.id ?? null,
+      titleId: editingDoctor.title?.id ?? null,
+      status: editingDoctor.status,
+      phone: editingDoctor.phone,
+      email: editingDoctor.email,
+      specialtyIds: editingDoctor.specialties?.map((s: any) => s.id) ?? [],
+      education: (editingDoctor.education ?? []).map((e: any) => ({
+        ...e,
+        id:
+          typeof e.id === "string" || e.id > Number.MAX_SAFE_INTEGER
+            ? null
+            : e.id,
+      })),
+      workExperience: (editingDoctor.workExperience ?? []).map((w: any) => ({
+        ...w,
+        id:
+          typeof w.id === "string" || w.id > Number.MAX_SAFE_INTEGER
+            ? null
+            : w.id,
+      })),
+      achievements: (editingDoctor.achievements ?? []).map((a: any) => ({
+        ...a,
+        id:
+          typeof a.id === "string" || a.id > Number.MAX_SAFE_INTEGER
+            ? null
+            : a.id,
+      })),
+      workingHours: (editingDoctor.workingHours ?? []).map((wh: any) => ({
+        ...wh,
+        id:
+          typeof wh.id === "string" || wh.id > Number.MAX_SAFE_INTEGER
+            ? null
+            : wh.id,
+      })),
+    };
+  }
 
-  const handleUpdateDoctor = () => {
+  const handleUpdateDoctor = async () => {
     if (!editingDoctor) return;
 
-    setDoctors(
-      doctors.map((doctor) =>
-        doctor.id === editingDoctor.id ? editingDoctor : doctor
-      )
-    );
-    setEditingDoctor(null);
+    try {
+      const normalizedPayload = normalizeDoctorPayload(editingDoctor);
+
+      const { code, message, result } = await updateDoctor(
+        editingDoctor.id,
+        normalizedPayload
+      );
+
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Cập nhật bác sĩ thành công!",
+          variant: "success",
+        });
+        setDoctors((prev) =>
+          prev.map((d) => (d.id === result.id ? result : d))
+        );
+        setEditingDoctor(null);
+      } else {
+        throw new Error(message || "Cập nhật bác sĩ thất bại");
+      }
+    } catch (error) {
+      console.error("Error updating doctor:", error);
+      let message = "Cập nhật bác sĩ thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -515,6 +278,7 @@ export function DoctorsManagement() {
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           setNewDoctor={setNewDoctor}
+          setDoctors={setDoctors}
         />
       </div>
 
@@ -569,7 +333,7 @@ export function DoctorsManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Tất cả chuyên khoa</SelectItem>
-                {mockDepartments.map((dept) => (
+                {departments.map((dept) => (
                   <SelectItem key={dept.id} value={dept.id.toString()}>
                     {dept.name}
                   </SelectItem>
@@ -630,7 +394,7 @@ export function DoctorsManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Chuyên khoa</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {mockDepartments.length}
+                  {departments.length}
                 </p>
               </div>
             </div>
@@ -639,30 +403,32 @@ export function DoctorsManagement() {
       </div>
 
       {/* Items per page selector */}
-      <div className="flex justify-end items-center gap-2">
-        <span className="text-sm text-gray-600">Hiển thị:</span>
-        <Select
-          value={itemsPerPage.toString()}
-          onValueChange={(value) => {
-            setItemsPerPage(Number.parseInt(value));
-            setCurrentPage(1); // Reset to first page when changing items per page
-          }}
-        >
-          <SelectTrigger className="w-[80px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="6">6</SelectItem>
-            <SelectItem value="9">9</SelectItem>
-            <SelectItem value="12">12</SelectItem>
-            <SelectItem value="24">24</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {doctors.length > 0 && (
+        <div className="flex justify-end items-center gap-2">
+          <span className="text-sm text-gray-600">Hiển thị:</span>
+          <Select
+            value={itemsPerPage.toString()}
+            onValueChange={(value) => {
+              setItemsPerPage(Number.parseInt(value));
+              setCurrentPage(1); // Reset to first page when changing items per page
+            }}
+          >
+            <SelectTrigger className="w-[80px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="6">6</SelectItem>
+              <SelectItem value="9">9</SelectItem>
+              <SelectItem value="12">12</SelectItem>
+              <SelectItem value="24">24</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Doctors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentDoctors.map((doctor) => (
+        {doctors.map((doctor) => (
           <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
@@ -735,7 +501,7 @@ export function DoctorsManagement() {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
-                  {doctor.experience_years} năm kinh nghiệm
+                  {doctor.experienceYears} năm kinh nghiệm
                 </div>
                 {doctor.phone && (
                   <div className="flex items-center text-sm text-gray-600">
@@ -763,21 +529,7 @@ export function DoctorsManagement() {
                     )}
                   </div>
                 )}
-                {doctor.rating && doctor.rating > 0 && (
-                  <div className="flex items-center gap-1">
-                    <div className="flex">
-                      {renderRatingStars(doctor.rating)}
-                    </div>
-                    <span className="text-sm text-gray-600">
-                      ({doctor.rating})
-                    </span>
-                  </div>
-                )}
-                {doctor.consultationFee && doctor.consultationFee > 0 && (
-                  <div className="text-sm font-medium text-green-600">
-                    Phí khám: {formatCurrency(doctor.consultationFee)}
-                  </div>
-                )}
+
                 <p className="text-sm text-gray-700 line-clamp-2">
                   {doctor.introduction}
                 </p>

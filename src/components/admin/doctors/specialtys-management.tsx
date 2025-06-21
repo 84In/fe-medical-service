@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,8 +59,16 @@ import {
   Clock,
   Trash2,
   Building2,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import type { Specialty } from "@/types/doctor";
+import { addSpecialty, getSpecialties, updateSpecialty } from "@/services";
+import {
+  SpecialtiesErrorFallback,
+  SpecialtiesLoadingSkeleton,
+} from "./specialty-skeleton";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockSpecialtys: Specialty[] = [
@@ -116,7 +124,7 @@ const mockSpecialtys: Specialty[] = [
 ];
 
 export function SpecialtysManagement() {
-  const [Specialtys, setSpecialtys] = useState<Specialty[]>(mockSpecialtys);
+  const [specialties, setSpecialties] = useState<Specialty[]>(mockSpecialtys);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -135,16 +143,13 @@ export function SpecialtysManagement() {
     status: "ACTIVE",
   });
 
-  // Filter Specialtys
-  const filteredSpecialtys = Specialtys.filter((Specialty) => {
-    const matchesSearch =
-      Specialty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      Specialty.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || Specialty.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -175,18 +180,85 @@ export function SpecialtysManagement() {
         return status;
     }
   };
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const data = await getSpecialties(
+          currentPage - 1,
+          itemsPerPage,
+          searchTerm,
+          statusFilter
+        );
+        console.log("Fetched doctors:", data);
 
-  const handleAddSpecialty = () => {
+        setSpecialties(data.items || []);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách chuyên môn:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handler = setTimeout(() => {
+      fetchSpecialties();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  if (loading) return <SpecialtiesLoadingSkeleton />;
+  if (error) return <SpecialtiesErrorFallback />;
+
+  const handleAddSpecialty = async () => {
     if (!newSpecialty.name || !newSpecialty.description) return;
 
-    const Specialty: Specialty = {
-      id: Date.now(),
+    const specialty: Partial<Specialty> = {
       name: newSpecialty.name,
       description: newSpecialty.description,
       status: (newSpecialty.status as Specialty["status"]) || "ACTIVE",
     };
 
-    setSpecialtys([...Specialtys, Specialty]);
+    try {
+      const { code, message, result } = await addSpecialty(specialty);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm chuyên môn thành công!",
+          variant: "success",
+        });
+        setSpecialties((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm chuyên môn thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding specialty:", error);
+      let message = "Thêm chuyên môn thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
     setNewSpecialty({
       name: "",
       description: "",
@@ -199,29 +271,76 @@ export function SpecialtysManagement() {
     setEditingSpecialty(Specialty);
   };
 
-  const handleUpdateSpecialty = () => {
+  const handleUpdateSpecialty = async () => {
     if (!editingSpecialty) return;
 
-    setSpecialtys(
-      Specialtys.map((Specialty) =>
-        Specialty.id === editingSpecialty.id ? editingSpecialty : Specialty
-      )
-    );
-    setEditingSpecialty(null);
+    try {
+      const { code, message, result } = await updateSpecialty(
+        editingSpecialty.id,
+        editingSpecialty
+      );
+
+      if (code === 0) {
+        setSpecialties((prev) =>
+          prev.map((dept) => (dept.id === result.id ? result : dept))
+        );
+        toast({
+          title: "Thành công!",
+          description: "Cập nhật chuyên môn thành công!",
+          variant: "success",
+        });
+      } else {
+        throw new Error(message || "Cập nhật chuyên môn thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật chuyên môn:", error);
+      let message = "Cập nhật chuyên môn thất bại!";
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setEditingSpecialty(null);
+    }
   };
 
   const handleDeleteSpecialty = () => {
     if (!deletingSpecialty) return;
 
-    setSpecialtys(
-      Specialtys.map((Specialty) =>
-        Specialty.id === deletingSpecialty.id
-          ? { ...Specialty, status: "DELETED" as const }
-          : Specialty
+    setSpecialties(
+      specialties.map((specialty) =>
+        specialty.id === deletingSpecialty.id
+          ? { ...specialty, status: "DELETED" as const }
+          : specialty
       )
     );
     setDeletingSpecialty(null);
   };
+
+  // Pagination handlers
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
   return (
     <div className="space-y-6">
@@ -354,10 +473,10 @@ export function SpecialtysManagement() {
               <Building2 className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng chuyên môn
+                  Tổng chuyên môn hiển thị
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Specialtys.length}
+                  {specialties.length}
                 </p>
               </div>
             </div>
@@ -370,7 +489,7 @@ export function SpecialtysManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Hoạt động</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Specialtys.filter((p) => p.status === "ACTIVE").length}
+                  {specialties.filter((p) => p.status === "ACTIVE").length}
                 </p>
               </div>
             </div>
@@ -385,7 +504,7 @@ export function SpecialtysManagement() {
                   Ngừng hoạt động
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Specialtys.filter((p) => p.status === "INACTIVE").length}
+                  {specialties.filter((p) => p.status === "INACTIVE").length}
                 </p>
               </div>
             </div>
@@ -398,7 +517,7 @@ export function SpecialtysManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Ẩn</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Specialtys.filter((p) => p.status === "HIDDEN").length}
+                  {specialties.filter((p) => p.status === "HIDDEN").length}
                 </p>
               </div>
             </div>
@@ -423,19 +542,19 @@ export function SpecialtysManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSpecialtys.map((Specialty) => (
-                  <TableRow key={Specialty.id}>
+                {specialties.map((specialty) => (
+                  <TableRow key={specialty.id}>
                     <TableCell className="font-medium">
-                      {Specialty.name}
+                      {specialty.name}
                     </TableCell>
                     <TableCell className="max-w-md">
                       <p className="text-sm text-gray-600 line-clamp-2">
-                        {Specialty.description}
+                        {specialty.description}
                       </p>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(Specialty.status)}>
-                        {getStatusText(Specialty.status)}
+                      <Badge className={getStatusColor(specialty.status)}>
+                        {getStatusText(specialty.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -447,19 +566,19 @@ export function SpecialtysManagement() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => setViewingSpecialty(Specialty)}
+                            onClick={() => setViewingSpecialty(specialty)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             Xem chi tiết
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleEditSpecialty(Specialty)}
+                            onClick={() => handleEditSpecialty(specialty)}
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setDeletingSpecialty(Specialty)}
+                            onClick={() => setDeletingSpecialty(specialty)}
                             className="text-red-600"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -475,7 +594,7 @@ export function SpecialtysManagement() {
           </div>
 
           {/* No results */}
-          {filteredSpecialtys.length === 0 && (
+          {specialties.length === 0 && (
             <div className="text-center py-12">
               <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -488,6 +607,99 @@ export function SpecialtysManagement() {
           )}
         </CardContent>
       </Card>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, specialties.length)} trong
+            tổng số {totalItems} chuyên môn
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* View Dialog */}
       {viewingSpecialty && (

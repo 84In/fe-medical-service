@@ -30,6 +30,7 @@ export const getDepartments = async (
 
   return response.data.result;
 };
+
 export const addDepartment = async (
   payload: Partial<Department>
 ): Promise<ApiResponse<Department>> => {
@@ -50,4 +51,33 @@ export const updateDepartment = async (
   );
 
   return response.data;
+};
+
+export const getDepartmentByIdServer = async (
+  id: number
+): Promise<Department | null> => {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/departments/${id}`,
+      {
+        cache: "no-store", // luôn lấy mới, không cache
+      }
+    );
+
+    if (!res.ok) {
+      console.error("Server error:", res.status);
+      return null;
+    }
+
+    const data: ApiResponse<Department> = await res.json();
+
+    if (data.code === 0 && data.result) {
+      return data.result;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Fetch error:", err);
+    return null;
+  }
 };

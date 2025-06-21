@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,860 +15,75 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import type {
-  Doctor,
-  Department,
-  Position,
-  Specialty,
-  Title,
-} from "@/types/doctor";
-import { ChevronRight, Home, PhoneCall } from "lucide-react";
-
-// Mock data sử dụng types đã định nghĩa
-const departmentsData: Department[] = [
-  {
-    id: 1,
-    name: "Tim mạch",
-    contentHtml: "<p>Chuyên khoa Tim mạch</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Nhi khoa",
-    contentHtml: "<p>Chuyên khoa Nhi</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Cấp cứu",
-    contentHtml: "<p>Khoa Cấp cứu</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Phẫu thuật",
-    contentHtml: "<p>Khoa Phẫu thuật</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "Mắt",
-    contentHtml: "<p>Khoa Mắt</p>",
-    status: "ACTIVE",
-  },
-  {
-    id: 6,
-    name: "Xương khớp",
-    contentHtml: "<p>Khoa Xương khớp</p>",
-    status: "ACTIVE",
-  },
-];
-
-const positionsData: Position[] = [
-  {
-    id: 1,
-    name: "Trưởng khoa",
-    description: "Trưởng khoa chuyên môn",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Phó trưởng khoa",
-    description: "Phó trưởng khoa chuyên môn",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Bác sĩ chuyên khoa",
-    description: "Bác sĩ chuyên khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Phó Giám đốc",
-    description: "Phó Giám đốc bệnh viện",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "Giám đốc",
-    description: "Giám đốc bệnh viện",
-    status: "ACTIVE",
-  },
-];
-
-const titlesData: Title[] = [
-  {
-    id: 1,
-    name: "Bác sĩ",
-    description: "Bác sĩ",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Thạc sĩ",
-    description: "Thạc sĩ Y khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Tiến sĩ",
-    description: "Tiến sĩ Y khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Phó Giáo sư",
-    description: "Phó Giáo sư",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "Giáo sư",
-    description: "Giáo sư",
-    status: "ACTIVE",
-  },
-];
-
-// Mock data cho bác sĩ sử dụng interface Doctor
-const doctorsData: (Doctor & {
-  slug: string;
-  rating: number;
-  specialties: Specialty[];
-})[] = [
-  {
-    id: 1,
-    name: "Nguyễn Văn An",
-    slug: "nguyen-van-an",
-    avatarUrl: "/placeholder.svg?height=200&width=200",
-    introduction:
-      "Bác sĩ chuyên khoa Tim mạch với hơn 15 năm kinh nghiệm trong điều trị các bệnh lý tim mạch phức tạp. Đã thực hiện thành công hơn 3,000 ca phẫu thuật tim và can thiệp tim mạch.",
-    experience_years: "15",
-    status: "ACTIVE",
-    rating: 4.9,
-    specialties: [
-      {
-        id: 1,
-        name: "Phẫu thuật tim",
-        description: "Phẫu thuật tim",
-        status: "ACTIVE",
-      },
-      {
-        id: 2,
-        name: "Siêu âm tim",
-        description: "Siêu âm tim",
-        status: "ACTIVE",
-      },
-      {
-        id: 3,
-        name: "Điện tâm đồ",
-        description: "Điện tâm đồ",
-        status: "ACTIVE",
-      },
-      {
-        id: 4,
-        name: "Can thiệp tim mạch",
-        description: "Can thiệp tim mạch",
-        status: "ACTIVE",
-      },
-    ],
-    department: departmentsData[0], // Tim mạch
-    position: positionsData[0], // Trưởng khoa
-    title: titlesData[0], // Bác sĩ
-    education: [
-      {
-        id: 1,
-        degree: "Bác sĩ Đa khoa",
-        institution: "Đại học Y Hà Nội",
-        year: "1998",
-        description: "Tốt nghiệp loại Giỏi",
-      },
-      {
-        id: 2,
-        degree: "Chuyên khoa I Tim mạch",
-        institution: "Bệnh viện Bạch Mai",
-        year: "2003",
-        description: "Chuyên sâu về tim mạch can thiệp",
-      },
-    ],
-    workExperience: [
-      {
-        id: 1,
-        position: "Trưởng khoa Tim mạch",
-        organization: "VitaCare Medical",
-        startYear: "2020",
-        description: "Quản lý và điều hành khoa Tim mạch",
-      },
-      {
-        id: 2,
-        position: "Phó trưởng khoa Tim mạch",
-        organization: "Bệnh viện Bạch Mai",
-        startYear: "2015",
-        endYear: "2020",
-        description: "Hỗ trợ quản lý và điều trị bệnh nhân",
-      },
-    ],
-    achievements: [
-      {
-        id: 1,
-        title: "Thầy thuốc trẻ xuất sắc",
-        year: "2018",
-        type: "AWARD",
-        description: "Giải thưởng của Bộ Y tế",
-      },
-      {
-        id: 2,
-        title: "Chứng chỉ Can thiệp tim mạch",
-        year: "2012",
-        type: "CERTIFICATION",
-        description: "Chứng chỉ quốc tế từ Hoa Kỳ",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "08:00",
-        endTime: "12:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "08:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        startTime: "08:00",
-        endTime: "12:00",
-        isAvailable: true,
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        startTime: "",
-        endTime: "",
-        isAvailable: false,
-      },
-    ],
-    languages: ["Tiếng Việt", "Tiếng Anh"],
-  },
-  {
-    id: 2,
-    name: "Trần Thị Bình",
-    slug: "tran-thi-binh",
-    avatarUrl: "/placeholder.svg?height=200&width=200",
-    introduction:
-      "Chuyên gia hàng đầu về nhi khoa với nhiều công trình nghiên cứu quốc tế. Có kinh nghiệm sâu rộng trong điều trị các bệnh lý nhi khoa phức tạp.",
-    experience_years: "20",
-    status: "ACTIVE",
-    rating: 4.8,
-    specialties: [
-      {
-        id: 1,
-        name: "Nhi tim mạch",
-        description: "Nhi tim mạch",
-        status: "ACTIVE",
-      },
-      {
-        id: 2,
-        name: "Nhi hô hấp",
-        description: "Nhi hô hấp",
-        status: "ACTIVE",
-      },
-      {
-        id: 3,
-        name: "Dinh dưỡng trẻ em",
-        description: "Dinh dưỡng trẻ em",
-        status: "ACTIVE",
-      },
-      {
-        id: 4,
-        name: "Nhi thần kinh",
-        description: "Nhi thần kinh",
-        status: "ACTIVE",
-      },
-    ],
-    department: departmentsData[1], // Nhi khoa
-    position: positionsData[3], // Phó Giám đốc
-    title: titlesData[3], // Phó Giáo sư
-    education: [
-      {
-        id: 1,
-        degree: "Đại học Y Dược TP.HCM",
-        institution: "",
-        year: "",
-        description: "",
-      },
-    ],
-    workExperience: [
-      {
-        id: 1,
-        position: "",
-        organization: "Bệnh viện Nhi Đồng 1",
-        startYear: "",
-        endYear: "",
-        description: "",
-      },
-      {
-        id: 2,
-        position: "",
-        organization: "Bệnh viện Nhi Trung Ương",
-        startYear: "",
-        endYear: "",
-        description: "",
-      },
-    ],
-    achievements: [
-      {
-        id: 1,
-        title: "Công trình nghiên cứu quốc tế về nhi khoa",
-        year: "",
-        type: "AWARD",
-        description: "",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "8:00",
-        endTime: "16:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "8:00",
-        endTime: "16:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "8:00",
-        endTime: "16:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "8:00",
-        endTime: "16:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "8:00",
-        endTime: "16:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        startTime: "8:00",
-        endTime: "16:00",
-        isAvailable: true,
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        startTime: "",
-        endTime: "",
-        isAvailable: false,
-      },
-    ],
-    languages: ["Tiếng Việt", "Tiếng Anh"],
-  },
-  {
-    id: 3,
-    name: "Lê Minh Cường",
-    slug: "le-minh-cuong",
-    avatarUrl: "/placeholder.svg?height=200&width=200",
-    introduction:
-      "Bác sĩ cấp cứu giàu kinh nghiệm trong xử lý các tình huống khẩn cấp. Chuyên về hồi sức cấp cứu và điều trị chấn thương.",
-    experience_years: "8",
-    status: "ACTIVE",
-    rating: 4.7,
-    specialties: [
-      {
-        id: 5,
-        name: "Hồi sức cấp cứu",
-        description: "Hồi sức cấp cứu",
-        status: "ACTIVE",
-      },
-      {
-        id: 6,
-        name: "Chấn thương",
-        description: "Chấn thương",
-        status: "ACTIVE",
-      },
-      {
-        id: 7,
-        name: "Cấp cứu nhi",
-        description: "Cấp cứu nhi",
-        status: "ACTIVE",
-      },
-      {
-        id: 8,
-        name: "Độc chất học",
-        description: "Độc chất học",
-        status: "ACTIVE",
-      },
-    ],
-    department: departmentsData[2], // Cấp cứu
-    position: positionsData[2], // Bác sĩ chuyên khoa
-    title: titlesData[0], // Bác sĩ
-    education: [
-      {
-        id: 2,
-        degree: "Đại học Y Dược Huế",
-        institution: "",
-        year: "",
-        description: "",
-      },
-    ],
-    workExperience: [
-      {
-        id: 3,
-        organization: "Bệnh viện Trung Ương Huế",
-        position: "",
-        startYear: "",
-        endYear: "",
-        description: "",
-      },
-    ],
-    achievements: [
-      {
-        id: 2,
-        title: "Bằng khen của Bộ Y tế",
-        year: "",
-        type: "AWARD",
-        description: "",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        startTime: "7:00",
-        endTime: "19:00",
-        isAvailable: true,
-      },
-    ],
-    languages: ["Tiếng Việt"],
-  },
-  {
-    id: 4,
-    name: "Phạm Văn Dũng",
-    slug: "pham-van-dung",
-    avatarUrl: "/placeholder.svg?height=200&width=200",
-    introduction:
-      "Chuyên gia phẫu thuật hàng đầu với nhiều kỹ thuật tiên tiến. Đã thực hiện thành công hàng nghìn ca phẫu thuật phức tạp với tỷ lệ thành công cao.",
-    experience_years: "25",
-    status: "ACTIVE",
-    rating: 5.0,
-    specialties: [
-      { id: 9, name: "Phẫu thuật nội soi", description: "", status: "ACTIVE" },
-      { id: 10, name: "Phẫu thuật tái tạo", description: "", status: "ACTIVE" },
-      { id: 11, name: "Phẫu thuật thẩm mỹ", description: "", status: "ACTIVE" },
-      { id: 12, name: "Phẫu thuật robot", description: "", status: "ACTIVE" },
-    ],
-    department: departmentsData[3], // Phẫu thuật
-    position: positionsData[4], // Giám đốc
-    title: titlesData[4], // Giáo sư
-    education: [
-      {
-        id: 3,
-        degree: "Đại học Y Hà Nội",
-        institution: "",
-        year: "",
-        description: "",
-      },
-    ],
-    workExperience: [
-      {
-        id: 4,
-        organization: "Bệnh viện Việt Đức",
-        position: "",
-        startYear: "",
-        endYear: "",
-        description: "",
-      },
-    ],
-    achievements: [
-      {
-        id: 3,
-        title: "Giải thưởng phẫu thuật xuất sắc",
-        year: "",
-        type: "AWARD",
-        description: "",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        isAvailable: false,
-        startTime: "",
-        endTime: "",
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        isAvailable: false,
-        startTime: "",
-        endTime: "",
-      },
-    ],
-    languages: ["Tiếng Việt", "Tiếng Anh"],
-  },
-  {
-    id: 5,
-    name: "Hoàng Thị Lan",
-    slug: "hoang-thi-lan",
-    avatarUrl: "/placeholder.svg?height=200&width=200",
-    introduction:
-      "Chuyên gia về các bệnh lý mắt và phẫu thuật mắt hiện đại. Có nhiều năm kinh nghiệm trong điều trị các bệnh lý mắt từ đơn giản đến phức tạp.",
-    experience_years: "12",
-    status: "ACTIVE",
-    rating: 4.8,
-    specialties: [
-      { id: 13, name: "Phẫu thuật mắt", description: "", status: "ACTIVE" },
-      {
-        id: 14,
-        name: "Điều trị tật khúc xạ",
-        description: "",
-        status: "ACTIVE",
-      },
-      { id: 15, name: "Bệnh võng mạc", description: "", status: "ACTIVE" },
-      { id: 16, name: "Phẫu thuật Lasik", description: "", status: "ACTIVE" },
-    ],
-    department: departmentsData[4], // Mắt
-    position: positionsData[0], // Trưởng khoa
-    title: titlesData[1], // Thạc sĩ
-    education: [
-      {
-        id: 4,
-        degree: "Đại học Y Dược TP.HCM",
-        institution: "",
-        year: "",
-        description: "",
-      },
-    ],
-    workExperience: [
-      {
-        id: 5,
-        organization: "Bệnh viện Mắt TP.HCM",
-        position: "",
-        startYear: "",
-        endYear: "",
-        description: "",
-      },
-    ],
-    achievements: [
-      {
-        id: 4,
-        title: "Đề tài nghiên cứu về phẫu thuật Lasik",
-        year: "",
-        type: "RESEARCH",
-        description: "",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "9:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "9:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "9:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "9:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "9:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        startTime: "9:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        isAvailable: false,
-        startTime: "",
-        endTime: "",
-      },
-    ],
-    languages: ["Tiếng Việt", "Tiếng Anh"],
-  },
-  {
-    id: 6,
-    name: "Vũ Thanh Hải",
-    slug: "vu-thanh-hai",
-    avatarUrl: "/placeholder.svg?height=200&width=200",
-    introduction:
-      "Chuyên gia điều trị các bệnh lý xương khớp và chấn thương thể thao. Có kinh nghiệm phong phú trong phẫu thuật xương khớp và phục hồi chức năng.",
-    experience_years: "10",
-    status: "ACTIVE",
-    rating: 4.6,
-    specialties: [
-      {
-        id: 17,
-        name: "Phẫu thuật xương khớp",
-        description: "",
-        status: "ACTIVE",
-      },
-      {
-        id: 18,
-        name: "Chấn thương thể thao",
-        description: "",
-        status: "ACTIVE",
-      },
-      { id: 19, name: "Nội soi khớp", description: "", status: "ACTIVE" },
-      { id: 20, name: "Thay khớp nhân tạo", description: "", status: "ACTIVE" },
-    ],
-    department: departmentsData[5], // Xương khớp
-    position: positionsData[1], // Phó trưởng khoa
-    title: titlesData[2], // Tiến sĩ
-    education: [
-      {
-        id: 5,
-        degree: "Đại học Y Dược Cần Thơ",
-        institution: "",
-        year: "",
-        description: "",
-      },
-    ],
-    workExperience: [
-      {
-        id: 6,
-        organization: "Bệnh viện Chấn thương Chỉnh hình TP.HCM",
-        position: "",
-        startYear: "",
-        endYear: "",
-        description: "",
-      },
-    ],
-    achievements: [
-      {
-        id: 5,
-        title: "Giải thưởng bác sĩ trẻ tiêu biểu",
-        year: "",
-        type: "AWARD",
-        description: "",
-      },
-    ],
-    workingHours: [
-      {
-        id: 1,
-        dayOfWeek: "MONDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 2,
-        dayOfWeek: "TUESDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 3,
-        dayOfWeek: "WEDNESDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 4,
-        dayOfWeek: "THURSDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 5,
-        dayOfWeek: "FRIDAY",
-        startTime: "8:00",
-        endTime: "17:00",
-        isAvailable: true,
-      },
-      {
-        id: 6,
-        dayOfWeek: "SATURDAY",
-        isAvailable: false,
-        startTime: "",
-        endTime: "",
-      },
-      {
-        id: 7,
-        dayOfWeek: "SUNDAY",
-        isAvailable: false,
-        startTime: "",
-        endTime: "",
-      },
-    ],
-    languages: ["Tiếng Việt"],
-  },
-];
-
-const departmentFilters = [
-  { id: "all", name: "Tất cả chuyên khoa" },
-  ...departmentsData.map((dept) => ({
-    id: dept.id.toString(),
-    name: dept.name,
-  })),
-];
+import type { Doctor } from "@/types/doctor";
+import {
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Home,
+  PhoneCall,
+} from "lucide-react";
+import { getDoctors } from "@/services";
+import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
+import { toSlug } from "@/utils/slugify";
+import { DoctorsTeamSkeleton } from "./doctors-team-skeleton";
 
 export function DoctorsTeamPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
-  const filteredDoctors = doctorsData.filter((doctor) => {
-    const matchesSearch =
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialties.some((specialty) =>
-        specialty.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ) ||
-      doctor.introduction.toLowerCase().includes(searchTerm.toLowerCase());
+  const { departments, refetch } = useDoctorMetadata();
 
-    const matchesDepartment =
-      selectedDepartment === "all" ||
-      doctor.department.id.toString() === selectedDepartment;
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      setLoading(true);
+      try {
+        const data = await getDoctors(
+          currentPage - 1,
+          itemsPerPage,
+          searchTerm,
+          "ACTIVE",
+          departmentFilter !== "ALL" ? +departmentFilter : undefined
+        );
+        console.log("Fetched doctors:", data);
 
-    return matchesSearch && matchesDepartment && doctor.status === "ACTIVE";
-  });
+        setDoctors(data.items || []);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách bác sĩ:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const handler = setTimeout(() => {
+      fetchDoctors();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, departmentFilter]);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+
+  // Show skeleton while loading
+  if (loading) {
+    return <DoctorsTeamSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -901,16 +116,13 @@ export function DoctorsTeamPage() {
             <div className="flex flex-wrap justify-center gap-8 text-center">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold">
-                  {doctorsData.length}+ Bác sĩ
+                  {doctors.length}+ Bác sĩ
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold">
-                  {departmentsData.length}+ Chuyên khoa
+                  {departments.length}+ Chuyên khoa
                 </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold">4.8/5 Đánh giá</span>
               </div>
             </div>
           </div>
@@ -934,15 +146,20 @@ export function DoctorsTeamPage() {
                   </div>
                 </div>
                 <Select
-                  value={selectedDepartment}
-                  onValueChange={setSelectedDepartment}
+                  value={departmentFilter}
+                  onValueChange={setDepartmentFilter}
                 >
                   <SelectTrigger className="w-full md:w-[250px] h-12">
                     <SelectValue placeholder="Chọn chuyên khoa" />
                   </SelectTrigger>
                   <SelectContent>
-                    {departmentFilters.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
+                    <SelectItem value="ALL">
+                      <div className="flex items-center gap-2">
+                        Tất cả chuyên khoa
+                      </div>
+                    </SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
                         <div className="flex items-center gap-2">
                           {dept.name}
                         </div>
@@ -955,14 +172,25 @@ export function DoctorsTeamPage() {
 
             {/* Department Filter Pills */}
             <div className="flex flex-wrap gap-2 mb-8">
-              {departmentFilters.map((dept) => (
+              <Button
+                key={"ALL"}
+                variant={departmentFilter === "ALL" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDepartmentFilter("ALL")}
+                className="flex items-center gap-2"
+              >
+                Tất cả chuyên khoa
+              </Button>
+              {departments.map((dept) => (
                 <Button
                   key={dept.id}
                   variant={
-                    selectedDepartment === dept.id ? "default" : "outline"
+                    departmentFilter === dept.id.toString()
+                      ? "default"
+                      : "outline"
                   }
                   size="sm"
-                  onClick={() => setSelectedDepartment(dept.id)}
+                  onClick={() => setDepartmentFilter(dept.id.toString())}
                   className="flex items-center gap-2"
                 >
                   {dept.name}
@@ -978,7 +206,7 @@ export function DoctorsTeamPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              {filteredDoctors.length} Bác sĩ được tìm thấy
+              {doctors.length} Bác sĩ được tìm thấy
             </h2>
             <p className="text-gray-600 text-lg">
               Chọn bác sĩ phù hợp với nhu cầu chăm sóc sức khỏe của bạn
@@ -986,8 +214,13 @@ export function DoctorsTeamPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredDoctors.map((doctor) => (
-              <Link href={`/doi-ngu-bac-si/${doctor.slug}`} key={doctor.id}>
+            {doctors.map((doctor) => (
+              <Link
+                href={`/doi-ngu-bac-si/${toSlug(
+                  `${doctor.name} ${doctor.id}`
+                )}`}
+                key={doctor.id}
+              >
                 <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-white rounded-2xl overflow-hidden h-full cursor-pointer">
                   <CardHeader className="p-0">
                     <div className="relative">
@@ -1011,13 +244,6 @@ export function DoctorsTeamPage() {
                           {doctor.department.name}
                         </Badge>
                       </div>
-                      <div className="absolute bottom-4 left-4">
-                        <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-                          <span className="font-semibold text-sm">
-                            ★ {doctor.rating}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -1030,7 +256,7 @@ export function DoctorsTeamPage() {
                       </p>
                       <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
-                          {doctor.experience_years} năm kinh nghiệm
+                          {doctor.experienceYears} năm kinh nghiệm
                         </div>
                         <div className="flex items-center gap-1">
                           {doctor.department.name}
@@ -1082,7 +308,103 @@ export function DoctorsTeamPage() {
             ))}
           </div>
 
-          {filteredDoctors.length === 0 && (
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Hiển thị</span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setItemsPerPage(Number.parseInt(value));
+                    setCurrentPage(1); // Reset to first page when changing items per page
+                  }}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">mục mỗi trang</span>
+              </div>
+
+              <div className="text-sm text-gray-600">
+                Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+                {Math.min(currentPage * itemsPerPage, doctors.length)} trong
+                tổng số {totalItems} chuyên khoa
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToFirstPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  Trước
+                </Button>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant={
+                        currentPage === pageNumber ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => paginate(pageNumber)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Sau
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToLastPage}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {doctors.length === 0 && (
             <div className="text-center py-16">
               <h3 className="text-xl font-semibold text-gray-600 mb-2">
                 Không tìm thấy bác sĩ

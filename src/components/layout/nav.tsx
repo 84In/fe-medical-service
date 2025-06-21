@@ -22,11 +22,14 @@ import {
 } from "@/components/ui/collapsible";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { toSlug } from "@/utils/slugify";
+import { Department } from "@/types";
+import { fetchDepartments } from "@/services/metadata.service";
+
 const services = [
   {
     title: "Khám sức khỏe tổng quát",
@@ -60,95 +63,6 @@ const services = [
   },
 ];
 
-const specialties = [
-  {
-    title: "Tim mạch",
-    href: "/chuyen-khoa/tim-mach-1",
-    description: "Điều trị các bệnh lý về tim và mạch máu",
-  },
-  {
-    title: "Nhi khoa",
-    href: "/chuyen-khoa/nhi-khoa-2",
-    description: "Chăm sóc sức khỏe trẻ em từ 0-16 tuổi",
-  },
-  {
-    title: "Cơ xương khớp",
-    href: "/chuyen-khoa/co-xuong-khop-3",
-    description: "Điều trị các bệnh lý về xương khớp",
-  },
-  {
-    title: "Chẩn đoán hình ảnh",
-    href: "/chuyen-khoa/chan-doan-hinh-anh-4",
-    description: "Chẩn đoán qua hình ảnh y học",
-  },
-  {
-    title: "Tiêu hóa",
-    href: "/chuyen-khoa/tieu-hoa-5",
-    description: "Điều trị các bệnh lý đường tiêu hóa",
-  },
-  {
-    title: "Da liễu",
-    href: "/chuyen-khoa/da-lieu-6",
-    description: "Điều trị các bệnh lý về da",
-  },
-];
-
-// const doctors = [
-//   {
-//     title: "Bác sĩ tim mạch",
-//     href: "/doi-ngu-y-te/tim-mach",
-//     description: "Đội ngũ bác sĩ chuyên khoa tim mạch",
-//   },
-//   {
-//     title: "Bác sĩ nhi khoa",
-//     href: "/doi-ngu-y-te/nhi-khoa",
-//     description: "Bác sĩ chuyên khoa nhi",
-//   },
-//   {
-//     title: "Bác sĩ cơ xương khớp",
-//     href: "/doi-ngu-y-te/co-xuong-khop",
-//     description: "Chuyên gia về xương khớp",
-//   },
-//   {
-//     title: "Bác sĩ chẩn đoán hình ảnh",
-//     href: "/doi-ngu-y-te/chan-doan-hinh-anh",
-//     description: "Chuyên gia đọc phim và chẩn đoán",
-//   },
-//   {
-//     title: "Tất cả bác sĩ",
-//     href: "/doi-ngu-y-te",
-//     description: "Xem danh sách đầy đủ đội ngũ bác sĩ",
-//   },
-// ];
-
-const news = [
-  {
-    title: "Tin tức y khoa",
-    href: "/tin-tuc/y-khoa",
-    description: "Cập nhật kiến thức y học mới nhất",
-  },
-  {
-    title: "Sức khỏe cộng đồng",
-    href: "/tin-tuc/suc-khoe-cong-dong",
-    description: "Thông tin sức khỏe cho cộng đồng",
-  },
-  {
-    title: "Khuyến mãi",
-    href: "/tin-tuc/khuyen-mai",
-    description: "Các chương trình ưu đãi đặc biệt",
-  },
-  {
-    title: "Sự kiện",
-    href: "/tin-tuc/su-kien",
-    description: "Các sự kiện và hoạt động của bệnh viện",
-  },
-  {
-    title: "Tất cả tin tức",
-    href: "/tin-tuc",
-    description: "Xem tất cả tin tức và bài viết",
-  },
-];
-
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
   React.ComponentPropsWithoutRef<"a">
@@ -165,26 +79,30 @@ const ListItem = React.forwardRef<
           {...props}
         >
           <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
+          {children && (
+            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              {children}
+            </p>
+          )}
         </a>
       </NavigationMenuLink>
     </li>
   );
 });
 ListItem.displayName = "ListItem";
-// Mobile Menu Item Component
+
 function MobileMenuItem({
   title,
   items,
   href,
   isActive,
+  onClickCloseMenu,
 }: {
   title: string;
-  items?: Array<{ title: string; href: string; description: string }>;
+  items?: Array<{ title: string; href: string }>;
   href?: string;
   isActive?: boolean;
+  onClickCloseMenu?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -192,6 +110,7 @@ function MobileMenuItem({
     return (
       <Link
         href={href || "#"}
+        onClick={onClickCloseMenu}
         className={cn(
           "block px-4 py-3 text-base font-medium border-b border-gray-100 transition-colors",
           isActive
@@ -238,7 +157,6 @@ function MobileMenuItem({
             className="block px-8 py-3 text-sm text-gray-600 hover:bg-white hover:text-gray-900 border-b border-gray-100 last:border-b-0 transition-colors"
           >
             <div className="font-medium">{item.title}</div>
-            <div className="text-xs text-gray-500 mt-1">{item.description}</div>
           </Link>
         ))}
       </CollapsibleContent>
@@ -249,19 +167,25 @@ function MobileMenuItem({
 export default function NavHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const [departments, setDepartments] = useState<Department[]>([]);
 
-  // Helper function to check if a path is active
   const isActive = (path: string) => {
-    if (path === "/") {
-      return pathname === "/";
-    }
+    if (path === "/") return pathname === "/";
     return pathname.startsWith(path);
   };
 
-  // Helper function to check if any item in a category is active
   const isCategoryActive = (items: Array<{ href: string }>) => {
     return items.some((item) => isActive(item.href));
   };
+
+  useEffect(() => {
+    fetchDepartments().then((data) => setDepartments(data || []));
+  }, []);
+
+  const departmentLinks = departments.map((dept) => ({
+    title: dept.name,
+    href: `/chuyen-khoa/${toSlug(`${dept.name} ${dept.id}`)}`,
+  }));
 
   return (
     <>
@@ -294,6 +218,7 @@ export default function NavHeader() {
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                {/* <ul className="flex flex-col w-[300px] gap-2 p-4"> */}
                 {/* Thêm một NavigationMenuLink */}
 
                 {services.map((service) => (
@@ -330,13 +255,20 @@ export default function NavHeader() {
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                {specialties.map((specialty) => (
+                {departments.map((department) => (
                   <ListItem
-                    key={specialty.title}
-                    title={specialty.title}
-                    href={specialty.href}
+                    key={department.id}
+                    title={department.name}
+                    href={`/chuyen-khoa/${toSlug(
+                      `${department.name} ${department.id}`
+                    )}`}
                   >
-                    {specialty.description}
+                    <div
+                      className="prose max-h-10 overflow-hidden text-sm text-muted-foreground"
+                      dangerouslySetInnerHTML={{
+                        __html: department.contentHtml,
+                      }}
+                    />
                   </ListItem>
                 ))}
                 <li className="col-span-2">
@@ -462,12 +394,15 @@ export default function NavHeader() {
                     title="Dịch vụ"
                     items={services}
                     isActive={isCategoryActive(services)}
+                    onClickCloseMenu={() => setMobileMenuOpen(false)}
                   />
                   <MobileMenuItem
                     title="Chuyên khoa"
-                    items={specialties}
-                    isActive={isCategoryActive(specialties)}
+                    items={departmentLinks}
+                    isActive={isCategoryActive(departmentLinks)}
+                    onClickCloseMenu={() => setMobileMenuOpen(false)}
                   />
+
                   {/* <MobileMenuItem
                     title="Bác sĩ"
                     items={doctors}

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,133 +11,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Building2,
-  Users,
-  Clock,
-  ArrowRight,
-  Search,
-  Filter,
-  Calendar,
-  Phone,
-  Star,
-  MapPin,
-  Activity,
-  Zap,
-  ChevronRight,
-  Home,
-} from "lucide-react";
+import { getDepartments } from "@/services";
 import type { Department } from "@/types";
-import { toSlug } from "@/utils/slugify";
-
-// Mock data với thông tin chi tiết hơn
-const mockDepartments: Department[] = [
-  {
-    id: 1,
-    name: "Tim mạch",
-    contentHtml: `
-      <p>Khoa Tim mạch chuyên điều trị các bệnh lý về tim và mạch máu với đội ngũ bác sĩ giàu kinh nghiệm và trang thiết bị hiện đại.</p>
-      <h3>Dịch vụ chính:</h3>
-      <ul>
-        <li>Khám và tư vấn tim mạch</li>
-        <li>Siêu âm tim 4D</li>
-        <li>Điện tâm đồ (ECG)</li>
-        <li>Holter 24h</li>
-        <li>Test gắng sức</li>
-        <li>Can thiệp tim mạch</li>
-      </ul>
-    `,
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Nhi khoa",
-    contentHtml: `
-      <p>Khoa Nhi chuyên chăm sóc sức khỏe trẻ em từ sơ sinh đến 16 tuổi với môi trường thân thiện và an toàn.</p>
-      <h3>Dịch vụ chính:</h3>
-      <ul>
-        <li>Khám sức khỏe định kỳ</li>
-        <li>Tiêm chủng đầy đủ</li>
-        <li>Điều trị bệnh lý nhi khoa</li>
-        <li>Tư vấn dinh dưỡng</li>
-        <li>Cấp cứu nhi</li>
-      </ul>
-    `,
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Cấp cứu",
-    contentHtml: `
-      <p>Khoa Cấp cứu hoạt động 24/7, sẵn sàng tiếp nhận và xử lý các trường hợp cấp cứu với tốc độ nhanh nhất.</p>
-      <h3>Dịch vụ chính:</h3>
-      <ul>
-        <li>Cấp cứu tim mạch</li>
-        <li>Cấp cứu hô hấp</li>
-        <li>Xử lý chấn thương</li>
-        <li>Cấp cứu sản khoa</li>
-        <li>Cấp cứu nhi khoa</li>
-      </ul>
-    `,
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Mắt",
-    contentHtml: `
-      <p>Khoa Mắt chuyên điều trị các bệnh lý về mắt với công nghệ laser hiện đại và đội ngũ bác sĩ chuyên môn cao.</p>
-      <h3>Dịch vụ chính:</h3>
-      <ul>
-        <li>Khám mắt tổng quát</li>
-        <li>Phẫu thuật cận thị</li>
-        <li>Điều trị glaucoma</li>
-        <li>Phẫu thuật cataract</li>
-        <li>Điều trị võng mạc</li>
-      </ul>
-    `,
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "Xương khớp",
-    contentHtml: `
-      <p>Khoa Xương khớp chuyên điều trị các bệnh lý về xương, khớp và cột sống với phương pháp điều trị tiên tiến.</p>
-      <h3>Dịch vụ chính:</h3>
-      <ul>
-        <li>Khám xương khớp</li>
-        <li>Phẫu thuật thay khớp</li>
-        <li>Điều trị cột sống</li>
-        <li>Vật lý trị liệu</li>
-        <li>Phẫu thuật nội soi</li>
-      </ul>
-    `,
-    status: "ACTIVE",
-  },
-  {
-    id: 6,
-    name: "Thần kinh",
-    contentHtml: `
-      <p>Khoa Thần kinh chuyên chẩn đoán và điều trị các bệnh lý về hệ thần kinh trung ương và ngoại biên.</p>
-      <h3>Dịch vụ chính:</h3>
-      <ul>
-        <li>Khám thần kinh</li>
-        <li>Điều trị đột quỵ</li>
-        <li>Điều trị động kinh</li>
-        <li>Điều trị Parkinson</li>
-        <li>Phẫu thuật thần kinh</li>
-      </ul>
-    `,
-    status: "ACTIVE",
-  },
-];
-
-// Mock data cho thống kê
-const departmentStats = {
-  totalDepartments: mockDepartments.length,
-  totalDoctors: 85,
-  totalPatients: 12500,
-  emergencyAvailable: true,
-};
+import {
+  ArrowRight,
+  Building2,
+  Calendar,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Home,
+  MapPin,
+  Phone,
+  Search,
+  Zap,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ChuyenKhoaSkeleton } from "./chuyen-khoa-skeleton";
+import { ChuyenKhoaError } from "./chuyen-khoa-error";
 
 // Function to create slug from name and id
 const createSlug = (name: string, id: number): string => {
@@ -156,55 +46,79 @@ const createSlug = (name: string, id: number): string => {
 
 export default function ChuyenKhoaClientPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [sortBy, setSortBy] = useState("name");
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Filter departments
-  const filteredDepartments = mockDepartments
-    .filter((department) => {
-      const matchesSearch = department.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        statusFilter === "ALL" || department.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      return 0;
-    });
+  const departmentStats = {
+    totalDepartments: totalItems,
+    totalDoctors: 85,
+    totalPatients: 12500,
+    emergencyAvailable: true,
+  };
 
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await getDepartments(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm
+      );
+
+      console.log("Fetched departments:", data);
+      setDepartments(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách chuyên khoa:", error);
+      setError(error as Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchDepartments();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm]);
+
+  const handleRetry = () => {
+    fetchDepartments();
+  };
+
+  function formatNumberWithDot(num: number): string {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   const stripHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, "");
   };
 
-  const getDoctorCount = (departmentId: number) => {
-    // Mock data - trong thực tế sẽ fetch từ API
-    const counts: Record<number, number> = {
-      1: 15, // Tim mạch
-      2: 12, // Nhi khoa
-      3: 8, // Cấp cứu
-      4: 10, // Mắt
-      5: 14, // Xương khớp
-      6: 11, // Thần kinh
-    };
-    return counts[departmentId] || 8;
-  };
+  // Show skeleton while loading
+  if (loading) {
+    return <ChuyenKhoaSkeleton />;
+  }
 
-  const getPatientCount = (departmentId: number) => {
-    // Mock data - trong thực tế sẽ fetch từ API
-    const counts: Record<number, number> = {
-      1: 2500, // Tim mạch
-      2: 1800, // Nhi khoa
-      3: 3200, // Cấp cứu
-      4: 1500, // Mắt
-      5: 2100, // Xương khớp
-      6: 1400, // Thần kinh
-    };
-    return counts[departmentId] || 1000;
-  };
-  function formatNumberWithDot(num: number): string {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  // Show error if there's an error
+  if (error) {
+    return <ChuyenKhoaError error={error} onRetry={handleRetry} />;
   }
 
   return (
@@ -281,26 +195,6 @@ export default function ChuyenKhoaClientPage() {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px] h-12">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả</SelectItem>
-                  <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                  <SelectItem value="INACTIVE">Tạm ngừng</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-[200px] h-12">
-                  <SelectValue placeholder="Sắp xếp" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Theo tên</SelectItem>
-                  <SelectItem value="doctors">Theo số bác sĩ</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -335,9 +229,7 @@ export default function ChuyenKhoaClientPage() {
 
         {/* Departments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredDepartments.map((department) => {
-            const doctorCount = getDoctorCount(department.id);
-            const patientCount = getPatientCount(department.id);
+          {departments.map((department) => {
             const slug = createSlug(department.name, department.id);
 
             return (
@@ -372,50 +264,9 @@ export default function ChuyenKhoaClientPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  <p className="text-gray-600 line-clamp-3">
+                  <p className="text-gray-600 line-clamp-6">
                     {stripHtml(department.contentHtml)}
                   </p>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 py-4 border-t border-gray-100">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-1">
-                        <Users className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        {doctorCount}
-                      </div>
-                      <div className="text-xs text-gray-600">Bác sĩ</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-1">
-                        <Activity className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        {patientCount.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-600">Bệnh nhân/năm</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center mb-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      </div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        4.8
-                      </div>
-                      <div className="text-xs text-gray-600">Đánh giá</div>
-                    </div>
-                  </div>
-
-                  {/* Working Hours */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {department.name === "Cấp cứu"
-                        ? "24/7 - Tất cả các ngày"
-                        : "T2-T6: 7:00-17:00, T7-CN: 8:00-16:00"}
-                    </span>
-                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-4">
@@ -425,13 +276,6 @@ export default function ChuyenKhoaClientPage() {
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </Link>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="hover:bg-blue-50"
-                    >
-                      <Calendar className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -440,7 +284,7 @@ export default function ChuyenKhoaClientPage() {
         </div>
 
         {/* No results */}
-        {filteredDepartments.length === 0 && (
+        {departments.length === 0 && (
           <div className="text-center py-16">
             <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">
@@ -449,14 +293,101 @@ export default function ChuyenKhoaClientPage() {
             <p className="text-gray-600 mb-6">
               Không có chuyên khoa nào phù hợp với tiêu chí tìm kiếm của bạn.
             </p>
-            <Button
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("ALL");
-              }}
-            >
-              Xóa bộ lọc
-            </Button>
+            <Button onClick={() => setSearchTerm("")}>Xóa bộ lọc</Button>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Hiển thị</span>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number.parseInt(value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-600">mục mỗi trang</span>
+            </div>
+
+            <div className="text-sm text-gray-600">
+              Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+              {Math.min(currentPage * itemsPerPage, departments.length)} trong
+              tổng số {totalItems} chuyên khoa
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+              >
+                Trước
+              </Button>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNumber = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + i;
+                } else {
+                  pageNumber = currentPage - 2 + i;
+                }
+
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => paginate(pageNumber)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Sau
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
 

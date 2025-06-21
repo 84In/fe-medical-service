@@ -11,7 +11,7 @@ export const addEducation = (
   setDoctor: (doctor: any) => void
 ) => {
   const newEducation: Education = {
-    id: Date.now(),
+    id: -Date.now(),
     degree: "",
     institution: "",
     year: "",
@@ -50,7 +50,7 @@ export const addWorkExperience = (
   setDoctor: (doctor: any) => void
 ) => {
   const newExperience: Experience = {
-    id: Date.now(),
+    id: -Date.now(),
     position: "",
     organization: "",
     startYear: "",
@@ -90,7 +90,7 @@ export const addAchievement = (
   setDoctor: (doctor: any) => void
 ) => {
   const newAchievement: Achievement = {
-    id: Date.now(),
+    id: -Date.now(),
     title: "",
     year: "",
     type: "AWARD",

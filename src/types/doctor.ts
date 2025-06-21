@@ -74,7 +74,7 @@ export interface Doctor {
   name: string;
   avatarUrl: string;
   introduction: string;
-  experience_years: string;
+  experienceYears: string;
   status: "INACTIVE" | "ACTIVE" | "DELETED" | "HIDDEN";
   department: Department;
   position: Position;
@@ -87,8 +87,4 @@ export interface Doctor {
   workExperience: Experience[];
   achievements: Achievement[];
   workingHours: WorkingHour[];
-  consultationFee?: number;
-  languages: string[];
-  rating?: number;
-  totalReviews?: number;
 }

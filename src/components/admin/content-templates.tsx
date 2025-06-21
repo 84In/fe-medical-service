@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Eye, Plus, Search, FileText, Copy } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export interface ContentTemplate {
   id: string;
@@ -440,6 +441,11 @@ export function ContentTemplates({
 
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
+    toast({
+      title: "Đã sao chép nội dung",
+      description: "Nội dung đã được sao chép vào clipboard.",
+      variant: "info",
+    });
     // Có thể thêm toast notification ở đây
   };
 

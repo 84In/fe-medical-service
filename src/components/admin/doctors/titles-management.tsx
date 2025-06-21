@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,8 +58,13 @@ import {
   Clock,
   Trash2,
   GraduationCap,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import type { Title } from "@/types/doctor";
+import { addTitle, getTitles, updateTitle } from "@/services/title.service";
+import { TitlesErrorFallback, TitlesLoadingSkeleton } from "./titles-skeleton";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockTitles: Title[] = [
@@ -130,16 +135,13 @@ export function TitlesManagement() {
     status: "ACTIVE",
   });
 
-  // Filter titles
-  const filteredTitles = titles.filter((title) => {
-    const matchesSearch =
-      title.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      title.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || title.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -171,17 +173,87 @@ export function TitlesManagement() {
     }
   };
 
-  const handleAddTitle = () => {
+  useEffect(() => {
+    const fetchTitles = async () => {
+      try {
+        const data = await getTitles(
+          currentPage - 1,
+          itemsPerPage,
+          searchTerm,
+          statusFilter
+        );
+        console.log("Fetched titles:", data);
+
+        setTitles(data.items || []);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách chức danh:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handler = setTimeout(() => {
+      fetchTitles();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  if (loading) return <TitlesLoadingSkeleton />;
+  if (error) return <TitlesErrorFallback />;
+
+  const handleAddTitle = async () => {
     if (!newTitle.name || !newTitle.description) return;
 
-    const title: Title = {
+    const title: Partial<Title> = {
       id: Date.now(),
       name: newTitle.name,
       description: newTitle.description,
       status: (newTitle.status as Title["status"]) || "ACTIVE",
     };
 
-    setTitles([...titles, title]);
+    try {
+      const { code, message, result } = await addTitle(title);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm chức danh thành công!",
+          variant: "success",
+        });
+        setTitles((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm chức danh thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding Titles:", error);
+      let message = "Thêm chức danh thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
+
     setNewTitle({
       name: "",
       description: "",
@@ -194,8 +266,53 @@ export function TitlesManagement() {
     setEditingTitle(title);
   };
 
-  const handleUpdateTitle = () => {
+  const handleUpdateTitle = async () => {
     if (!editingTitle) return;
+
+    try {
+      const { code, message, result } = await updateTitle(
+        editingTitle.id,
+        editingTitle
+      );
+
+      if (code === 0) {
+        setTitles((prev) =>
+          prev.map((dept) => (dept.id === result.id ? result : dept))
+        );
+        toast({
+          title: "Thành công!",
+          description: "Cập nhật chuyên môn thành công!",
+          variant: "success",
+        });
+      } else {
+        throw new Error(message || "Cập nhật chuyên môn thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật chuyên môn:", error);
+      let message = "Cập nhật chuyên môn thất bại!";
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setEditingTitle(null);
+    }
 
     setTitles(
       titles.map((title) =>
@@ -217,6 +334,13 @@ export function TitlesManagement() {
     );
     setDeletingTitle(null);
   };
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
   return (
     <div className="space-y-6">
@@ -415,7 +539,7 @@ export function TitlesManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTitles.map((title) => (
+                {titles.map((title) => (
                   <TableRow key={title.id}>
                     <TableCell className="font-medium">{title.name}</TableCell>
                     <TableCell className="max-w-md">
@@ -465,7 +589,7 @@ export function TitlesManagement() {
           </div>
 
           {/* No results */}
-          {filteredTitles.length === 0 && (
+          {titles.length === 0 && (
             <div className="text-center py-12">
               <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -525,6 +649,100 @@ export function TitlesManagement() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, titles.length)} trong tổng số{" "}
+            {totalItems} chức danh
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Edit Dialog */}
