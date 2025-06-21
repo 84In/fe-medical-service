@@ -28,6 +28,7 @@ import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
 import { toSlug } from "@/utils/slugify";
 import { DoctorsTeamSkeleton } from "./doctors-team-skeleton";
 import { fetchDepartments } from "@/services/metadata.service";
+import { DoiNguBacSiError } from "./bac-si-error";
 
 export function DoctorsTeamPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,7 +36,7 @@ export function DoctorsTeamPage() {
   const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
   const [departmentsError, setDepartmentsError] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   // Pagination state
@@ -43,29 +44,29 @@ export function DoctorsTeamPage() {
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [departments, setDepartments] = useState<Department[]>([]);
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      setLoading(true);
-      try {
-        const data = await getDoctors(
-          currentPage - 1,
-          itemsPerPage,
-          searchTerm,
-          "ACTIVE",
-          departmentFilter !== "ALL" ? +departmentFilter : undefined
-        );
-        console.log("Fetched doctors:", data);
+  const fetchDoctors = async () => {
+    setLoading(true);
+    try {
+      const data = await getDoctors(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        "ACTIVE",
+        departmentFilter !== "ALL" ? +departmentFilter : undefined
+      );
+      console.log("Fetched doctors:", data);
 
-        setDoctors(data.items || []);
-        setTotalPages(data.totalPages);
-        setTotalItems(data.totalItems);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách bác sĩ:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setDoctors(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách bác sĩ:", error);
+      setError(error as Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     const handler = setTimeout(() => {
       fetchDoctors();
     }, 500);
@@ -96,6 +97,9 @@ export function DoctorsTeamPage() {
     setDepartmentsError(false);
     fetchAllDepartments();
   };
+  const handleRetry = () => {
+    fetchDoctors();
+  };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
   const goToFirstPage = () => setCurrentPage(1);
@@ -108,6 +112,11 @@ export function DoctorsTeamPage() {
   // Show skeleton while loading
   if (loading) {
     return <DoctorsTeamSkeleton />;
+  }
+
+  // Show error if there's an error
+  if (error) {
+    return <DoiNguBacSiError error={error} onRetry={handleRetry} />;
   }
 
   return (
