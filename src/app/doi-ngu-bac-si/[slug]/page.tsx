@@ -2,7 +2,7 @@ import { DoctorDetailPage } from "@/components/doctors/doctor-detail-page";
 import { getDoctorByIdServer } from "@/services";
 import { Doctor } from "@/types";
 
-export const extractIdFromSlug = (slug: string): number | null => {
+const extractIdFromSlug = (slug: string): number | null => {
   const parts = slug.split("-");
   const last = parts[parts.length - 1];
   const id = parseInt(last, 10);
