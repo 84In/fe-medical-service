@@ -1,3 +1,4 @@
+import { ImageUpload } from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -21,40 +22,32 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
+import { toast } from "@/hooks/use-toast";
+import { addDoctor } from "@/services";
+import { Achievement, Doctor, WorkingHour } from "@/types";
 import {
-  Achievement,
-  Doctor,
-  Education,
-  Experience,
-  WorkingHour,
-} from "@/types";
-import {
-  addEducation,
-  updateEducation,
-  removeEducation,
-  addWorkExperience,
-  updateWorkExperience,
-  removeWorkExperience,
   addAchievement,
-  updateAchievement,
+  addEducation,
+  addWorkExperience,
   removeAchievement,
+  removeEducation,
+  removeWorkExperience,
+  updateAchievement,
+  updateEducation,
+  updateWorkExperience,
   updateWorkingHour,
 } from "@/utils/doctorUtils";
 import { Plus, Trash2 } from "lucide-react";
-import {
-  achievementTypes,
-  dayOfWeekOptions,
-  mockDepartments,
-  mockPositions,
-  mockTitles,
-  specialtyOptions,
-} from "./mockData";
+import { useCallback } from "react";
+import { achievementTypes, dayOfWeekOptions } from "./mockData";
 
 interface DoctorFormProps {
   newDoctor: Partial<Doctor>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setNewDoctor: React.Dispatch<React.SetStateAction<Partial<Doctor>>>;
+  setDoctors?: React.Dispatch<React.SetStateAction<Doctor[]>>;
 }
 
 export default function DoctorForm({
@@ -62,9 +55,12 @@ export default function DoctorForm({
   open,
   onOpenChange,
   setNewDoctor,
+  setDoctors = () => {}, // Default to a no-op function if not provided
 }: DoctorFormProps) {
+  const { departments, positions, titles, specialties, loading, refetch } =
+    useDoctorMetadata();
   //handle adding a new doctor
-  const handleAddDoctor = () => {
+  const handleAddDoctor = async () => {
     if (
       !newDoctor.name ||
       !newDoctor.department ||
@@ -73,34 +69,75 @@ export default function DoctorForm({
     )
       return;
 
-    const doctor: Doctor = {
-      id: Date.now(),
+    const doctor: any = {
       name: newDoctor.name,
       avatarUrl: newDoctor.avatarUrl || "/placeholder.svg?height=100&width=100",
       introduction: newDoctor.introduction || "",
-      experience_years: newDoctor.experience_years || "0",
+      experienceYears: newDoctor.experienceYears || "0",
       status: (newDoctor.status as Doctor["status"]) || "ACTIVE",
-      department: newDoctor.department,
-      position: newDoctor.position,
-      title: newDoctor.title,
       phone: newDoctor.phone || "",
       email: newDoctor.email || "",
-      specialties: newDoctor.specialties || [],
-      languages: newDoctor.languages || [],
-      consultationFee: newDoctor.consultationFee || 0,
-      rating: newDoctor.rating || 0,
-      education: newDoctor.education || [],
-      workExperience: newDoctor.workExperience || [],
-      achievements: newDoctor.achievements || [],
-      workingHours: newDoctor.workingHours || [],
+      departmentId: newDoctor.department?.id,
+      positionId: newDoctor.position?.id,
+      titleId: newDoctor.title?.id,
+      specialtyIds: (newDoctor.specialties || []).map((s) => s.id),
+      education: (newDoctor.education || []).map(({ id, ...rest }) => rest),
+      workExperience: (newDoctor.workExperience || []).map(
+        ({ id, ...rest }) => rest
+      ),
+      achievements: (newDoctor.achievements || []).map(
+        ({ id, ...rest }) => rest
+      ),
+      workingHours: (newDoctor.workingHours || []).map(
+        ({ id, ...rest }) => rest
+      ),
     };
 
     // setDoctors([...doctors, doctor]);
+    try {
+      const { code, message, result } = await addDoctor(doctor);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm bác sĩ thành công!",
+          variant: "success",
+        });
+        setDoctors((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm bác sĩ thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding department:", error);
+      let message = "Thêm bác sĩ thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
+
+    // Reset the form after adding
     setNewDoctor({
       name: "",
       avatarUrl: "",
       introduction: "",
-      experience_years: "",
+      experienceYears: "",
       status: "ACTIVE",
       department: undefined,
       position: undefined,
@@ -108,14 +145,11 @@ export default function DoctorForm({
       phone: "",
       email: "",
       specialties: [],
-      languages: [],
-      consultationFee: 0,
-      rating: 0,
       education: [],
       workExperience: [],
       achievements: [],
-      workingHours: dayOfWeekOptions.map((day, index) => ({
-        id: index + 1,
+      workingHours: dayOfWeekOptions.map((day, idx) => ({
+        id: idx + 1,
         dayOfWeek: day.value as WorkingHour["dayOfWeek"],
         startTime: day.value === "SUNDAY" ? "" : "08:00",
         endTime: day.value === "SUNDAY" ? "" : "17:00",
@@ -124,6 +158,16 @@ export default function DoctorForm({
     });
     onOpenChange(false);
   };
+
+  const addImage = useCallback(
+    (url: string) => {
+      setNewDoctor((prev) => ({
+        ...prev,
+        avatarUrl: url,
+      }));
+    },
+    [setNewDoctor]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,16 +185,21 @@ export default function DoctorForm({
             là bắt buộc.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs
+          defaultValue="basic"
+          className="w-full flex flex-col gap-20 lg:gap-4"
+        >
+          <TabsList className="grid w-full gap-2 grid-cols-[repeat(auto-fit,minmax(120px,1fr))] ">
             <TabsTrigger value="basic">Cơ bản</TabsTrigger>
             <TabsTrigger value="education">Học vấn</TabsTrigger>
             <TabsTrigger value="experience">Kinh nghiệm</TabsTrigger>
             <TabsTrigger value="achievements">Thành tích</TabsTrigger>
             <TabsTrigger value="schedule">Lịch làm việc</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="basic" className="space-y-4">
+          <TabsContent
+            value="basic"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Họ và tên *</Label>
@@ -165,20 +214,15 @@ export default function DoctorForm({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="avatarUrl">Ảnh đại diện</Label>
-                <Input
-                  id="avatarUrl"
-                  value={newDoctor.avatarUrl || ""}
-                  onChange={(e) =>
-                    setNewDoctor({
-                      ...newDoctor,
-                      avatarUrl: e.target.value,
-                    })
-                  }
-                  placeholder="https://example.com/avatar.jpg"
+                <ImageUpload
+                  onImageSelect={addImage}
+                  folder={"doctors"}
+                  maxSize={5}
+                  initialImage={newDoctor.avatarUrl}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="introduction">Mô tả</Label>
+                <Label htmlFor="introduction">Mô tả *</Label>
                 <Textarea
                   id="introduction"
                   value={newDoctor.introduction || ""}
@@ -192,43 +236,68 @@ export default function DoctorForm({
                   rows={3}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="specialties">Chuyên môn *</Label>
+                <MultiSelect
+                  disabled={loading}
+                  options={specialties.map((s) => s.name)}
+                  value={(newDoctor.specialties || []).map((s) =>
+                    typeof s === "string" ? s : s.name
+                  )}
+                  onChange={(selectedNames) =>
+                    setNewDoctor({
+                      ...newDoctor,
+                      specialties: specialties.filter((s) =>
+                        selectedNames.includes(s.name)
+                      ),
+                    })
+                  }
+                  placeholder={
+                    loading ? "Đang tải chuyên môn..." : "Chọn chuyên môn"
+                  }
+                />
+              </div>
+              <div className="grid gap-2  lg:grid-cols-2 lg:gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="experience">Số năm kinh nghiệm</Label>
+                  <Label htmlFor="experience">Số năm kinh nghiệm *</Label>
                   <Input
                     id="experience"
-                    value={newDoctor.experience_years || ""}
+                    value={newDoctor.experienceYears || ""}
                     onChange={(e) =>
                       setNewDoctor({
                         ...newDoctor,
-                        experience_years: e.target.value,
+                        experienceYears: e.target.value,
                       })
                     }
                     placeholder="e.g., 10"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="rating">Đánh giá (1-5)</Label>
-                  <Input
-                    id="rating"
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={newDoctor.rating || 0}
-                    onChange={(e) =>
+                  <Label htmlFor="status">Trạng thái</Label>
+                  <Select
+                    value={newDoctor.status}
+                    onValueChange={(value) =>
                       setNewDoctor({
                         ...newDoctor,
-                        rating: Number.parseFloat(e.target.value),
+                        status: value as Doctor["status"],
                       })
                     }
-                    placeholder="4.5"
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                      <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
+                      <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2 lg:grid-cols-2 lg:gap-4">
+                {" "}
                 <div className="grid gap-2">
-                  <Label htmlFor="phone">Số điện thoại</Label>
+                  <Label htmlFor="phone">Số điện thoại *</Label>
                   <Input
                     id="phone"
                     value={newDoctor.phone || ""}
@@ -239,7 +308,7 @@ export default function DoctorForm({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -251,78 +320,29 @@ export default function DoctorForm({
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="consultationFee">Phí khám (VNĐ)</Label>
-                <Input
-                  id="consultationFee"
-                  type="number"
-                  value={newDoctor.consultationFee || 0}
-                  onChange={(e) =>
-                    setNewDoctor({
-                      ...newDoctor,
-                      consultationFee: Number.parseInt(e.target.value),
-                    })
-                  }
-                  placeholder="500000"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="specialties">Chuyên môn</Label>
-                <MultiSelect
-                  options={specialtyOptions}
-                  value={(newDoctor.specialties || []).map((s) =>
-                    typeof s === "string" ? s : s.name
-                  )}
-                  onChange={(value) =>
-                    setNewDoctor({
-                      ...newDoctor,
-                      specialties: value.map((name) => ({
-                        id: Date.now() + Math.random(),
-                        name,
-                        status: "ACTIVE",
-                        description: name,
-                      })),
-                    })
-                  }
-                  placeholder="Chọn chuyên môn"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="languages">Ngôn ngữ</Label>
-                <Input
-                  id="languages"
-                  value={
-                    newDoctor.languages ? newDoctor.languages.join(", ") : ""
-                  }
-                  onChange={(e) =>
-                    setNewDoctor({
-                      ...newDoctor,
-                      languages: e.target.value
-                        .split(",")
-                        .map((l) => l.trim())
-                        .filter((l) => l),
-                    })
-                  }
-                  placeholder="Tiếng Việt, English, 中文"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
+
+              <div className="grid gap-2  lg:grid-cols-3 lg:gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="title">Chức danh *</Label>
                   <Select
+                    disabled={loading}
                     value={newDoctor.title?.id.toString()}
                     onValueChange={(value) => {
-                      const title = mockTitles.find(
+                      const title = titles.find(
                         (t) => t.id.toString() === value
                       );
                       setNewDoctor({ ...newDoctor, title });
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn chức danh" />
+                      <SelectValue
+                        placeholder={
+                          !loading ? "Chọn chức danh" : "Đang tải chức danh..."
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockTitles.map((title) => (
+                      {titles.map((title) => (
                         <SelectItem key={title.id} value={title.id.toString()}>
                           {title.name}
                         </SelectItem>
@@ -333,19 +353,24 @@ export default function DoctorForm({
                 <div className="grid gap-2">
                   <Label htmlFor="department">Chuyên khoa *</Label>
                   <Select
+                    disabled={loading}
                     value={newDoctor.department?.id.toString()}
                     onValueChange={(value) => {
-                      const department = mockDepartments.find(
+                      const department = departments.find(
                         (d) => d.id.toString() === value
                       );
                       setNewDoctor({ ...newDoctor, department });
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn chuyên khoa" />
+                      <SelectValue
+                        placeholder={
+                          loading ? "Đang tải chuyên khoa" : "Chọn chuyên khoa"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockDepartments.map((dept) => (
+                      {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id.toString()}>
                           {dept.name}
                         </SelectItem>
@@ -356,19 +381,24 @@ export default function DoctorForm({
                 <div className="grid gap-2">
                   <Label htmlFor="position">Chức vụ *</Label>
                   <Select
+                    disabled={loading}
                     value={newDoctor.position?.id.toString()}
                     onValueChange={(value) => {
-                      const position = mockPositions.find(
+                      const position = positions.find(
                         (p) => p.id.toString() === value
                       );
                       setNewDoctor({ ...newDoctor, position });
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn chức vụ" />
+                      <SelectValue
+                        placeholder={
+                          loading ? "Đang tải chức vụ" : "Chọn chức vụ"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockPositions.map((pos) => (
+                      {positions.map((pos) => (
                         <SelectItem key={pos.id} value={pos.id.toString()}>
                           {pos.name}
                         </SelectItem>
@@ -380,7 +410,10 @@ export default function DoctorForm({
             </div>
           </TabsContent>
 
-          <TabsContent value="education" className="space-y-4">
+          <TabsContent
+            value="education"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Học vấn</h3>
               <Button
@@ -480,7 +513,10 @@ export default function DoctorForm({
             ))}
           </TabsContent>
 
-          <TabsContent value="experience" className="space-y-4">
+          <TabsContent
+            value="experience"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Kinh nghiệm làm việc</h3>
               <Button
@@ -598,7 +634,10 @@ export default function DoctorForm({
             ))}
           </TabsContent>
 
-          <TabsContent value="achievements" className="space-y-4">
+          <TabsContent
+            value="achievements"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Thành tích & Giải thưởng</h3>
               <Button
@@ -708,7 +747,10 @@ export default function DoctorForm({
             ))}
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-4">
+          <TabsContent
+            value="schedule"
+            className="space-y-4 p-4 border rounded-xl bg-white shadow"
+          >
             <h3 className="text-lg font-medium">Lịch làm việc</h3>
             {newDoctor.workingHours?.map((hour, index) => (
               <Card key={hour.id} className="p-4">

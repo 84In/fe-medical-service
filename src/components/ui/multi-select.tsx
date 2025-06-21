@@ -25,6 +25,7 @@ interface MultiSelectProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function MultiSelect({
@@ -33,6 +34,7 @@ export function MultiSelect({
   onChange,
   placeholder = "Chọn...",
   className,
+  disabled,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -50,7 +52,12 @@ export function MultiSelect({
 
   return (
     <div className={cn("w-full", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!disabled) setOpen(nextOpen);
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="outline"

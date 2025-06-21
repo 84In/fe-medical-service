@@ -6,7 +6,11 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ["umcclinic.com.vn"],
+    domains: [
+      "umcclinic.com.vn",
+      "https://res.cloudinary.com",
+      "res.cloudinary.com",
+    ],
   },
 };
 

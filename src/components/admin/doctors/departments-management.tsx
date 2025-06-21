@@ -199,22 +199,38 @@ export function DepartmentsManagement() {
 
     try {
       const { code, message, result } = await addDepartment(department);
-      if (!code || code !== 0) {
-        throw new Error(message || "Thêm chuyên khoa thất bại");
-      } else {
+      if (code === 0) {
         toast({
           title: "Thành công!",
           description: "Thêm chuyên khoa thành công!",
-          variant: "default",
+          variant: "success",
         });
         setDepartments((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm chuyên khoa thất bại");
       }
     } catch (error) {
       console.error("Error adding department:", error);
+      let message = "Thêm chuyên khoa thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
       toast({
         title: "Thất bại!",
-        description:
-          error instanceof Error ? error.message : "Thêm chuyên khoa thất bại!",
+        description: message,
         variant: "destructive",
       });
     }
@@ -234,12 +250,10 @@ export function DepartmentsManagement() {
     if (!editingDepartment || !editingDepartment.id) return;
 
     try {
-      // Gọi API cập nhật
       const { code, message, result } = await updateDepartment(
         editingDepartment.id,
         editingDepartment
       );
-      console.log("Updating department:", code, message, result);
 
       if (code === 0) {
         setDepartments((prev) =>
@@ -248,7 +262,7 @@ export function DepartmentsManagement() {
         toast({
           title: "Thành công!",
           description: " Cập nhật chuyên khoa thành công!",
-          variant: "default",
+          variant: "success",
         });
       } else {
         throw new Error(message || "Cập nhật chuyên khoa thất bại");

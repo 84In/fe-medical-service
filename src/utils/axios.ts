@@ -5,7 +5,8 @@ import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
+  baseURL:
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://192.168.1.109:8080/api/v1",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -15,13 +16,19 @@ const api = axios.create({
 // ✅ Request Interceptor: gắn token vào header
 api.interceptors.request.use(
   (config) => {
-    const skipAuth = ["/auth/login", "/auth/logout"];
-    if (!skipAuth.some((path) => config.url?.includes(path))) {
+    const isGet = config.method?.toUpperCase() === "GET";
+    const skipAuthPaths = ["/auth/login", "/auth/logout"];
+
+    const shouldSkip =
+      isGet || skipAuthPaths.some((path) => config.url?.includes(path));
+
+    if (!shouldSkip) {
       const token = useAuthStore.getState().token;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)

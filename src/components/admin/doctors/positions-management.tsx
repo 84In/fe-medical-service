@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,8 +59,16 @@ import {
   Clock,
   Trash2,
   Building2,
+  ChevronsRight,
+  ChevronsLeft,
 } from "lucide-react";
 import type { Position } from "@/types/doctor";
+import { addPosition, getPositions, updatePosition } from "@/services";
+import {
+  PositionsErrorFallback,
+  PositionsLoadingSkeleton,
+} from "./position-skeleton";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockPositions: Position[] = [
@@ -81,13 +89,13 @@ const mockPositions: Position[] = [
   {
     id: 3,
     name: "Bác sĩ chuyên khoa",
-    description: "Bác sĩ có chuyên môn sâu trong một lĩnh vực y tế cụ thể",
+    description: "Bác sĩ có chức vụ sâu trong một lĩnh vực y tế cụ thể",
     status: "ACTIVE",
   },
   {
     id: 4,
     name: "Trưởng khoa",
-    description: "Trưởng khoa chuyên môn, quản lý hoạt động của khoa",
+    description: "Trưởng khoa chức vụ, quản lý hoạt động của khoa",
     status: "ACTIVE",
   },
   {
@@ -126,16 +134,44 @@ export function PositionsManagement() {
     status: "ACTIVE",
   });
 
-  // Filter positions
-  const filteredPositions = positions.filter((position) => {
-    const matchesSearch =
-      position.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      position.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || position.status === statusFilter;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    const fetchPositions = async () => {
+      try {
+        const data = await getPositions(
+          currentPage - 1,
+          itemsPerPage,
+          searchTerm,
+          statusFilter
+        );
+        console.log("Fetched doctors:", data);
+
+        setPositions(data.items || []);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách chức vụ:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handler = setTimeout(() => {
+      fetchPositions();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+  if (loading) return <PositionsLoadingSkeleton />;
+  if (error) return <PositionsErrorFallback />;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -167,17 +203,54 @@ export function PositionsManagement() {
     }
   };
 
-  const handleAddPosition = () => {
+  const handleAddPosition = async () => {
     if (!newPosition.name || !newPosition.description) return;
 
-    const position: Position = {
-      id: Date.now(),
+    const position: Partial<Position> = {
       name: newPosition.name,
       description: newPosition.description,
       status: (newPosition.status as Position["status"]) || "ACTIVE",
     };
 
-    setPositions([...positions, position]);
+    try {
+      const { code, message, result } = await addPosition(position);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm chức vụ thành công!",
+          variant: "default",
+        });
+        setPositions((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm chức vụ thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding Positions:", error);
+      let message = "Thêm chức vụ thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
+
     setNewPosition({
       name: "",
       description: "",
@@ -190,15 +263,53 @@ export function PositionsManagement() {
     setEditingPosition(position);
   };
 
-  const handleUpdatePosition = () => {
+  const handleUpdatePosition = async () => {
     if (!editingPosition) return;
 
-    setPositions(
-      positions.map((position) =>
-        position.id === editingPosition.id ? editingPosition : position
-      )
-    );
-    setEditingPosition(null);
+    try {
+      const { code, message, result } = await updatePosition(
+        editingPosition.id,
+        editingPosition
+      );
+
+      if (code === 0) {
+        setPositions((prev) =>
+          prev.map((dept) => (dept.id === result.id ? result : dept))
+        );
+        toast({
+          title: "Thành công!",
+          description: " Cập nhật chức vụ thành công!",
+          variant: "default",
+        });
+      } else {
+        throw new Error(message || "Cập nhật chức vụ thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật chức vụ:", error);
+      let message = "Cập nhật chức vụ thất bại!";
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setEditingPosition(null);
+    }
   };
 
   const handleDeletePosition = () => {
@@ -213,6 +324,15 @@ export function PositionsManagement() {
     );
     setDeletingPosition(null);
   };
+
+  // Pagination handlers
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
   return (
     <div className="space-y-6">
@@ -411,7 +531,7 @@ export function PositionsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPositions.map((position) => (
+                {positions.map((position) => (
                   <TableRow key={position.id}>
                     <TableCell className="font-medium">
                       {position.name}
@@ -463,7 +583,7 @@ export function PositionsManagement() {
           </div>
 
           {/* No results */}
-          {filteredPositions.length === 0 && (
+          {positions.length === 0 && (
             <div className="text-center py-12">
               <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -521,6 +641,99 @@ export function PositionsManagement() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, positions.length)} trong tổng
+            số {totalItems} chức vụ
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Edit Dialog */}

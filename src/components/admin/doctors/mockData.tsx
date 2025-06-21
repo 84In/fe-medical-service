@@ -79,6 +79,10 @@ export const specialtyOptions = [
   "Siêu âm",
   "Nội khoa tổng quát",
   "Quản lý bệnh mãn tính",
+  "Chăm sóc sức khỏe người cao tuổi",
+  "Chăm sóc sức khỏe phụ nữ",
+  "Chăm sóc sức khỏe trẻ em",
+  "Chăm sóc sức khỏe tâm thần",
 ];
 
 export const dayOfWeekOptions = [

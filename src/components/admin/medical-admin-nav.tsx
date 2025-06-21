@@ -74,7 +74,7 @@ const navigationItems: NavItem[] = [
       {
         title: "Chuyên môn",
         icon: <Stethoscope className="h-4 w-4" />,
-        href: "/admin/doctors/specialtys",
+        href: "/admin/doctors/specialties",
       },
       {
         title: "Chức vụ",
