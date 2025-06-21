@@ -263,7 +263,7 @@ export default function NavHeader() {
                       `${department.name} ${department.id}`
                     )}`}
                   >
-                    <div
+                    <li
                       className="prose max-h-10 overflow-hidden text-sm text-muted-foreground"
                       dangerouslySetInnerHTML={{
                         __html: department.contentHtml,

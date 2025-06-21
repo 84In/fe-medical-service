@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import type { Doctor } from "@/types/doctor";
+import { Department, type Doctor } from "@/types/doctor";
 import {
   ChevronRight,
   ChevronsLeft,
@@ -27,11 +27,13 @@ import { getDoctors } from "@/services";
 import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
 import { toSlug } from "@/utils/slugify";
 import { DoctorsTeamSkeleton } from "./doctors-team-skeleton";
+import { fetchDepartments } from "@/services/metadata.service";
 
 export function DoctorsTeamPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
+  const [departmentsError, setDepartmentsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
@@ -39,8 +41,7 @@ export function DoctorsTeamPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);
-
-  const { departments, refetch } = useDoctorMetadata();
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -71,6 +72,30 @@ export function DoctorsTeamPage() {
 
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, departmentFilter]);
+  useEffect(() => {
+    fetchAllDepartments();
+  }, []);
+
+  const fetchAllDepartments = async () => {
+    try {
+      const response = await fetchDepartments();
+      if (response && response.length > 0) {
+        setDepartments(response);
+        setDepartmentsError(false);
+      } else {
+        setDepartments([]);
+        setDepartmentsError(true);
+      }
+    } catch (error) {
+      console.error("Không thể tải departments:", error);
+      setDepartmentsError(true);
+    }
+  };
+
+  const retryDepartments = () => {
+    setDepartmentsError(false);
+    fetchAllDepartments();
+  };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
   const goToFirstPage = () => setCurrentPage(1);
@@ -145,7 +170,22 @@ export function DoctorsTeamPage() {
                     />
                   </div>
                 </div>
-                <Select
+                {departmentsError && (
+                  <div className="mb-6 p-2 rounded-xl border border-red-300 bg-red-50 text-red-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span>
+                      Không thể tải danh sách chuyên khoa. Vui lòng thử lại sau.
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-red-300 text-red-700 hover:bg-red-100"
+                      onClick={retryDepartments}
+                    >
+                      Thử lại
+                    </Button>
+                  </div>
+                )}
+                {/* <Select
                   value={departmentFilter}
                   onValueChange={setDepartmentFilter}
                 >
@@ -166,37 +206,63 @@ export function DoctorsTeamPage() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select> */}
+                {departments.length > 0 && (
+                  <Select
+                    value={departmentFilter}
+                    onValueChange={setDepartmentFilter}
+                  >
+                    <SelectTrigger className="w-full md:w-[250px] h-12">
+                      <SelectValue placeholder="Chọn chuyên khoa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">
+                        <div className="flex items-center gap-2">
+                          Tất cả chuyên khoa
+                        </div>
+                      </SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            {dept.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
             {/* Department Filter Pills */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              <Button
-                key={"ALL"}
-                variant={departmentFilter === "ALL" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDepartmentFilter("ALL")}
-                className="flex items-center gap-2"
-              >
-                Tất cả chuyên khoa
-              </Button>
-              {departments.map((dept) => (
+            {departments.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
                 <Button
-                  key={dept.id}
-                  variant={
-                    departmentFilter === dept.id.toString()
-                      ? "default"
-                      : "outline"
-                  }
+                  key={"ALL"}
+                  variant={departmentFilter === "ALL" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setDepartmentFilter(dept.id.toString())}
+                  onClick={() => setDepartmentFilter("ALL")}
                   className="flex items-center gap-2"
                 >
-                  {dept.name}
+                  Tất cả chuyên khoa
                 </Button>
-              ))}
-            </div>
+                {departments.map((dept) => (
+                  <Button
+                    key={dept.id}
+                    variant={
+                      departmentFilter === dept.id.toString()
+                        ? "default"
+                        : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setDepartmentFilter(dept.id.toString())}
+                    className="flex items-center gap-2"
+                  >
+                    {dept.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
