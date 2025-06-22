@@ -27,41 +27,11 @@ import { ChevronDown, ChevronRight, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { toSlug } from "@/utils/slugify";
-import { Department } from "@/types";
-import { fetchDepartments } from "@/services/metadata.service";
-
-const services = [
-  {
-    title: "Khám sức khỏe tổng quát",
-    href: "/dich-vu/loai/kham-tong-quat-1",
-    description: "Khám sức khỏe định kỳ và tầm soát bệnh lý",
-  },
-  {
-    title: "Tầm soát ung thư",
-    href: "/dich-vu/loai/tam-soat-ung-thu-2",
-    description: "Phát hiện sớm các dấu hiệu ung thư",
-  },
-  {
-    title: "Chẩn đoán hình ảnh",
-    href: "/dich-vu/loai/chan-doan-hinh-anh-3",
-    description: "X-quang, CT, MRI, siêu âm",
-  },
-  {
-    title: "Xét nghiệm",
-    href: "/dich-vu/loai/xet-nghiem-4",
-    description: "Xét nghiệm máu, nước tiểu, sinh hóa",
-  },
-  {
-    title: "Khám chuyên khoa",
-    href: "/dich-vu/loai/kham-chuyen-khoa-5",
-    description: "Khám và điều trị các bệnh chuyên khoa",
-  },
-  {
-    title: "Gói khám VIP",
-    href: "/dich-vu/loai/goi-kham-vip-6",
-    description: "Dịch vụ khám cao cấp với tiện ích đặc biệt",
-  },
-];
+import { Department, ServiceType } from "@/types";
+import {
+  fetchDepartmentsWithSearch,
+  fetchServiceTypesWithSearch,
+} from "@/services/metadata.service";
 
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
@@ -168,6 +138,7 @@ export default function NavHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -179,12 +150,22 @@ export default function NavHeader() {
   };
 
   useEffect(() => {
-    fetchDepartments().then((data) => setDepartments(data || []));
+    fetchDepartmentsWithSearch("", "ACTIVE").then((data) =>
+      setDepartments(data || [])
+    );
+    fetchServiceTypesWithSearch("", "ACTIVE").then((data) =>
+      setServiceTypes(data || [])
+    );
   }, []);
 
   const departmentLinks = departments.map((dept) => ({
     title: dept.name,
     href: `/chuyen-khoa/${toSlug(`${dept.name} ${dept.id}`)}`,
+  }));
+
+  const serviceTLinks = serviceTypes.map((st) => ({
+    title: st.name,
+    href: `/dich-vu/loai/${toSlug(`${st.name} ${st.id}`)}`,
   }));
 
   return (
@@ -221,23 +202,25 @@ export default function NavHeader() {
                 {/* <ul className="flex flex-col w-[300px] gap-2 p-4"> */}
                 {/* Thêm một NavigationMenuLink */}
 
-                {services.map((service) => (
+                {serviceTypes.map((service) => (
                   <ListItem
-                    key={service.title}
-                    title={service.title}
-                    href={service.href}
+                    key={service.id}
+                    title={service.name}
+                    href={`/dich-vu/loai/${toSlug(
+                      `${service.name} ${service.id}`
+                    )}`}
                   >
                     {service.description}
                   </ListItem>
                 ))}
-                <li className="col-span-2">
+                <div className="col-span-2">
                   <NavigationMenuLink
                     className="flex items-center justify-center w-full rounded-md bg-blue-50 p-2 text-blue-700 hover:bg-blue-100"
                     href="/dich-vu"
                   >
                     Xem tất cả dịch vụ
                   </NavigationMenuLink>
-                </li>
+                </div>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
@@ -263,7 +246,7 @@ export default function NavHeader() {
                       `${department.name} ${department.id}`
                     )}`}
                   >
-                    <li
+                    <span
                       className="prose max-h-10 overflow-hidden text-sm text-muted-foreground"
                       dangerouslySetInnerHTML={{
                         __html: department.contentHtml,
@@ -392,8 +375,8 @@ export default function NavHeader() {
                   />
                   <MobileMenuItem
                     title="Dịch vụ"
-                    items={services}
-                    isActive={isCategoryActive(services)}
+                    items={serviceTLinks}
+                    isActive={isCategoryActive(serviceTLinks)}
                     onClickCloseMenu={() => setMobileMenuOpen(false)}
                   />
                   <MobileMenuItem

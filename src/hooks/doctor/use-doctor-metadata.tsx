@@ -2,10 +2,11 @@ import { ToastAction } from "@/components/ui/toast";
 import {
   fetchDepartments,
   fetchPositions,
+  fetchServiceTypes,
   fetchSpecialties,
   fetchTitles,
 } from "@/services/metadata.service";
-import { Department, Position, Specialty, Title } from "@/types";
+import { Department, Position, ServiceType, Specialty, Title } from "@/types";
 import { useEffect, useState } from "react";
 import { toast } from "../use-toast";
 

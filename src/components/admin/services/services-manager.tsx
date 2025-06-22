@@ -1,41 +1,5 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,180 +10,230 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useServiceMetadata } from "@/hooks/services/use-services-metadata";
+import { toast } from "@/hooks/use-toast";
+import {
+  addService,
+  getServices,
+  updateService,
+} from "@/services/services.service";
+import type { Service } from "@/types";
+import { formatDate } from "@/utils/format-utils";
+import { generateSlug } from "@/utils/slugify";
+import { getStatusColor, getStatusText } from "@/utils/status-css";
+import { stripHtml } from "@/utils/strip-tools";
+import {
+  Activity,
+  Building2,
+  ChevronsLeft,
+  ChevronsRight,
+  Clock,
+  Edit,
+  ExternalLink,
+  Eye,
+  FileText,
+  MoreVertical,
   Plus,
   Search,
-  Edit,
-  Eye,
-  MoreVertical,
-  Building2,
-  Users,
-  Activity,
-  Clock,
   Trash2,
-  FileText,
-  ExternalLink,
+  Users,
 } from "lucide-react";
-import { TiptapEditor } from "../tiptap-editor";
-import type { Service, ServiceType } from "@/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useCallback, useEffect, useState } from "react";
 import { ImageUpload } from "../../image-upload";
+import { TiptapEditor } from "../tiptap-editor";
+import { ServicesError } from "./services-error";
+import { ServicesSkeleton } from "./services-skeleton";
 
 // Mock data
-const serviceTypesMock: ServiceType[] = [
-  {
-    id: 1,
-    name: "Khám tổng quát",
-    description: "Dịch vụ khám sức khỏe tổng quát",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Tầm soát ung thư",
-    description: "Dịch vụ tầm soát ung thư",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Chẩn đoán hình ảnh",
-    description: "Dịch vụ chẩn đoán hình ảnh",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Xét nghiệm",
-    description: "Dịch vụ xét nghiệm y tế",
-    status: "ACTIVE",
-  },
-];
+// const mockServices: Service[] = [
+//   {
+//     id: 1,
+//     slug: "kham-suc-khoe-tong-quat",
+//     name: "Khám sức khỏe tổng quát",
+//     thumbnailUrl:
+//       "https://umcclinic.com.vn/Data/Sites/1/media/dich-vu/ca-nhan/kham-suc-khoe-tong-quat-va-tam-soat-ung-thu/h1.jpg",
+//     descriptionShort:
+//       "Gói khám sức khỏe tổng quát giúp phát hiện sớm các vấn đề sức khỏe.",
+//     contentHtml: `
+//       <h2>Khám sức khoẻ tổng quát</h2>
+// <p>
+//   Gói khám sức khỏe tổng quát tại <strong>Bệnh viện VitaCare</strong> được xây dựng nhằm giúp khách hàng đánh giá toàn diện tình trạng sức khỏe hiện tại, phát hiện sớm các nguy cơ tiềm ẩn và có hướng điều trị kịp thời. Gói dịch vụ bao gồm các xét nghiệm từ cơ bản đến chuyên sâu, phù hợp với nhu cầu của nhiều đối tượng khác nhau.
+// </p>
+// <p>
+//   <strong>Đối tượng phù hợp:</strong> Người từ 18 tuổi trở lên, người có tiền sử bệnh lý trong gia đình, hoặc làm việc trong môi trường áp lực, độc hại.<br/>
+//   <strong>Thời gian thực hiện:</strong> Khoảng 2–3 giờ, bao gồm khám tổng quát, thực hiện xét nghiệm, siêu âm và tư vấn kết quả.<br/>
+//   <strong>Chi phí:</strong> Dao động từ 1.500.000 VNĐ đến 3.000.000 VNĐ tuỳ theo gói dịch vụ.<br/>
+//   <strong>Địa điểm:</strong> Bệnh viện VitaCare – 123 Đường ABC, Quận 1, TP. Hồ Chí Minh.
+// </p>
 
-const mockServices: Service[] = [
-  {
-    id: 1,
-    slug: "kham-suc-khoe-tong-quat",
-    name: "Khám sức khỏe tổng quát",
-    thumbnailUrl:
-      "https://umcclinic.com.vn/Data/Sites/1/media/dich-vu/ca-nhan/kham-suc-khoe-tong-quat-va-tam-soat-ung-thu/h1.jpg",
-    descriptionShort:
-      "Gói khám sức khỏe tổng quát giúp phát hiện sớm các vấn đề sức khỏe.",
-    contentHtml: `
-      <h2>Khám sức khoẻ tổng quát</h2>
-<p>
-  Gói khám sức khỏe tổng quát tại <strong>Bệnh viện VitaCare</strong> được xây dựng nhằm giúp khách hàng đánh giá toàn diện tình trạng sức khỏe hiện tại, phát hiện sớm các nguy cơ tiềm ẩn và có hướng điều trị kịp thời. Gói dịch vụ bao gồm các xét nghiệm từ cơ bản đến chuyên sâu, phù hợp với nhu cầu của nhiều đối tượng khác nhau.
-</p>
-<p>
-  <strong>Đối tượng phù hợp:</strong> Người từ 18 tuổi trở lên, người có tiền sử bệnh lý trong gia đình, hoặc làm việc trong môi trường áp lực, độc hại.<br/>
-  <strong>Thời gian thực hiện:</strong> Khoảng 2–3 giờ, bao gồm khám tổng quát, thực hiện xét nghiệm, siêu âm và tư vấn kết quả.<br/>
-  <strong>Chi phí:</strong> Dao động từ 1.500.000 VNĐ đến 3.000.000 VNĐ tuỳ theo gói dịch vụ.<br/>
-  <strong>Địa điểm:</strong> Bệnh viện VitaCare – 123 Đường ABC, Quận 1, TP. Hồ Chí Minh.
-</p>
+// <h3>Dịch vụ tổng quát bao gồm:</h3>
+// <ul>
+//   <li>Khám lâm sàng toàn diện</li>
+//   <li>Xét nghiệm máu và sinh hoá cơ bản</li>
+//   <li>Phân tích nước tiểu</li>
+//   <li>Siêu âm ổ bụng tổng quát</li>
+//   <li>Đo điện tâm đồ (ECG)</li>
+// </ul>
 
-<h3>Dịch vụ tổng quát bao gồm:</h3>
-<ul>
-  <li>Khám lâm sàng toàn diện</li>
-  <li>Xét nghiệm máu và sinh hoá cơ bản</li>
-  <li>Phân tích nước tiểu</li>
-  <li>Siêu âm ổ bụng tổng quát</li>
-  <li>Đo điện tâm đồ (ECG)</li>
-</ul>
+// <img src="https://umcclinic.com.vn/Data/Sites/1/media/dich-vu/ca-nhan/kham-suc-khoe-tong-quat-va-tam-soat-ung-thu/h1.jpg" alt="Phòng khám tim mạch hiện đại" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" />
 
-<img src="https://umcclinic.com.vn/Data/Sites/1/media/dich-vu/ca-nhan/kham-suc-khoe-tong-quat-va-tam-soat-ung-thu/h1.jpg" alt="Phòng khám tim mạch hiện đại" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" />
+// <h3>Đội ngũ chuyên gia</h3>
+// <p>
+//   Được dẫn dắt bởi các bác sĩ đầu ngành giàu kinh nghiệm trong lĩnh vực tầm soát và phát hiện sớm bệnh lý, đội ngũ chuyên gia tại VitaCare luôn tận tâm mang đến kết quả chính xác và lời khuyên y khoa kịp thời cho từng khách hàng.
+// </p>
 
-<h3>Đội ngũ chuyên gia</h3>
-<p>
-  Được dẫn dắt bởi các bác sĩ đầu ngành giàu kinh nghiệm trong lĩnh vực tầm soát và phát hiện sớm bệnh lý, đội ngũ chuyên gia tại VitaCare luôn tận tâm mang đến kết quả chính xác và lời khuyên y khoa kịp thời cho từng khách hàng.
-</p>
+// <h3>Trang thiết bị hiện đại</h3>
+// <ul>
+//   <li>Máy siêu âm 4D độ phân giải cao</li>
+//   <li>Hệ thống xét nghiệm tự động</li>
+//   <li>Thiết bị đo điện tim, huyết áp và chỉ số sinh tồn tiên tiến</li>
+// </ul>
 
-<h3>Trang thiết bị hiện đại</h3>
-<ul>
-  <li>Máy siêu âm 4D độ phân giải cao</li>
-  <li>Hệ thống xét nghiệm tự động</li>
-  <li>Thiết bị đo điện tim, huyết áp và chỉ số sinh tồn tiên tiến</li>
-</ul>
+// <p><em>Để được tư vấn hoặc đặt lịch khám, vui lòng liên hệ hotline: <strong>1900-1234</strong></em></p>
 
-<p><em>Để được tư vấn hoặc đặt lịch khám, vui lòng liên hệ hotline: <strong>1900-1234</strong></em></p>
+//     `,
+//     status: "ACTIVE",
+//     createdAt: new Date().toISOString(),
+//     updatedAt: new Date().toISOString(),
+//     serviceType: serviceTypesMock[0],
+//   },
+//   {
+//     id: 2,
+//     slug: "tam-soat-ung-thu",
+//     name: "Tầm soát ung thư",
+//     thumbnailUrl: "",
+//     descriptionShort:
+//       "Gói tầm soát ung thư giúp phát hiện sớm các dấu hiệu ung thư.",
+//     contentHtml: `<h2>Tầm soát ung thư</h2>
+// <p>
+//   Gói tầm soát ung thư tại <strong>Bệnh viện VitaCare</strong> được thiết kế nhằm phát hiện sớm các dấu hiệu bất thường có thể dẫn đến ung thư, từ đó giúp tăng hiệu quả điều trị và cải thiện tiên lượng bệnh. Gói dịch vụ được cá nhân hóa theo độ tuổi, giới tính và yếu tố nguy cơ của từng khách hàng.
+// </p>
 
-    `,
-    status: "ACTIVE",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    serviceType: serviceTypesMock[0],
-  },
-  {
-    id: 2,
-    slug: "tam-soat-ung-thu",
-    name: "Tầm soát ung thư",
-    thumbnailUrl: "",
-    descriptionShort:
-      "Gói tầm soát ung thư giúp phát hiện sớm các dấu hiệu ung thư.",
-    contentHtml: `<h2>Tầm soát ung thư</h2>
-<p>
-  Gói tầm soát ung thư tại <strong>Bệnh viện VitaCare</strong> được thiết kế nhằm phát hiện sớm các dấu hiệu bất thường có thể dẫn đến ung thư, từ đó giúp tăng hiệu quả điều trị và cải thiện tiên lượng bệnh. Gói dịch vụ được cá nhân hóa theo độ tuổi, giới tính và yếu tố nguy cơ của từng khách hàng.
-</p>
+// <p>
+//   <strong>Đối tượng nên thực hiện:</strong> Người trên 30 tuổi, có tiền sử gia đình mắc ung thư, hút thuốc lá, uống rượu, tiếp xúc với hóa chất độc hại hoặc có dấu hiệu bất thường kéo dài không rõ nguyên nhân.<br/>
+//   <strong>Thời gian thực hiện:</strong> Khoảng 3–4 giờ, bao gồm khám lâm sàng, thực hiện các xét nghiệm chuyên sâu, chẩn đoán hình ảnh và tư vấn kết quả.<br/>
+//   <strong>Chi phí:</strong> Từ 2.500.000 VNĐ đến 6.000.000 VNĐ tùy theo gói và giới tính.<br/>
+//   <strong>Địa điểm:</strong> Bệnh viện VitaCare – 123 Đường ABC, Quận 1, TP. Hồ Chí Minh.
+// </p>
 
-<p>
-  <strong>Đối tượng nên thực hiện:</strong> Người trên 30 tuổi, có tiền sử gia đình mắc ung thư, hút thuốc lá, uống rượu, tiếp xúc với hóa chất độc hại hoặc có dấu hiệu bất thường kéo dài không rõ nguyên nhân.<br/>
-  <strong>Thời gian thực hiện:</strong> Khoảng 3–4 giờ, bao gồm khám lâm sàng, thực hiện các xét nghiệm chuyên sâu, chẩn đoán hình ảnh và tư vấn kết quả.<br/>
-  <strong>Chi phí:</strong> Từ 2.500.000 VNĐ đến 6.000.000 VNĐ tùy theo gói và giới tính.<br/>
-  <strong>Địa điểm:</strong> Bệnh viện VitaCare – 123 Đường ABC, Quận 1, TP. Hồ Chí Minh.
-</p>
+// <h3>Các hạng mục tầm soát tiêu biểu:</h3>
+// <ul>
+//   <li>Xét nghiệm máu tầm soát ung thư (CEA, AFP, CA-125, CA 19-9,...)</li>
+//   <li>Nội soi dạ dày – đại tràng</li>
+//   <li>Siêu âm tuyến giáp, ổ bụng, vú (đối với nữ)</li>
+//   <li>Chụp X-quang, CT ngực, hoặc MRI (theo chỉ định)</li>
+//   <li>Tư vấn kết quả và hướng theo dõi, điều trị</li>
+// </ul>
 
-<h3>Các hạng mục tầm soát tiêu biểu:</h3>
-<ul>
-  <li>Xét nghiệm máu tầm soát ung thư (CEA, AFP, CA-125, CA 19-9,...)</li>
-  <li>Nội soi dạ dày – đại tràng</li>
-  <li>Siêu âm tuyến giáp, ổ bụng, vú (đối với nữ)</li>
-  <li>Chụp X-quang, CT ngực, hoặc MRI (theo chỉ định)</li>
-  <li>Tư vấn kết quả và hướng theo dõi, điều trị</li>
-</ul>
+// <img src="https://umcclinic.com.vn/Data/Sites/1/media/dich-vu/ca-nhan/kham-suc-khoe-tong-quat-va-tam-soat-ung-thu/h1.jpg" alt="Máy chụp CT hiện đại tại Bệnh viện VitaCare" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" />
 
-<img src="https://umcclinic.com.vn/Data/Sites/1/media/dich-vu/ca-nhan/kham-suc-khoe-tong-quat-va-tam-soat-ung-thu/h1.jpg" alt="Máy chụp CT hiện đại tại Bệnh viện VitaCare" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" />
+// <h3>Ưu điểm vượt trội</h3>
+// <ul>
+//   <li>Phát hiện sớm ung thư ngay cả khi chưa có triệu chứng</li>
+//   <li>Công nghệ chẩn đoán hình ảnh và xét nghiệm tiên tiến</li>
+//   <li>Đội ngũ bác sĩ chuyên môn cao trong lĩnh vực ung bướu</li>
+//   <li>Tư vấn cá nhân hóa theo hồ sơ sức khoẻ</li>
+// </ul>
 
-<h3>Ưu điểm vượt trội</h3>
-<ul>
-  <li>Phát hiện sớm ung thư ngay cả khi chưa có triệu chứng</li>
-  <li>Công nghệ chẩn đoán hình ảnh và xét nghiệm tiên tiến</li>
-  <li>Đội ngũ bác sĩ chuyên môn cao trong lĩnh vực ung bướu</li>
-  <li>Tư vấn cá nhân hóa theo hồ sơ sức khoẻ</li>
-</ul>
+// <p><em>Liên hệ <strong>1900-1234</strong> để được tư vấn miễn phí và đặt lịch tầm soát kịp thời.</em></p>
+// `,
+//     status: "ACTIVE",
+//     createdAt: new Date().toISOString(),
+//     updatedAt: new Date().toISOString(),
+//     serviceType: serviceTypesMock[1],
+//   },
+//   {
+//     id: 3,
+//     slug: "sieu-am-tong-quat",
+//     name: "Siêu âm tổng quát",
+//     thumbnailUrl: "/placeholder.svg?height=200&width=300",
+//     descriptionShort:
+//       "Dịch vụ siêu âm tổng quát với công nghệ hiện đại, chẩn đoán chính xác.",
+//     contentHtml: `<h2>Siêu âm tổng quát</h2>
+// <p>Dịch vụ siêu âm tổng quát tại VitaCare Medical sử dụng công nghệ siêu âm 4D hiện đại nhất, giúp chẩn đoán chính xác các bệnh lý về nội tạng.</p>
 
-<p><em>Liên hệ <strong>1900-1234</strong> để được tư vấn miễn phí và đặt lịch tầm soát kịp thời.</em></p>
-`,
-    status: "ACTIVE",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    serviceType: serviceTypesMock[1],
-  },
-  {
-    id: 3,
-    slug: "sieu-am-tong-quat",
-    name: "Siêu âm tổng quát",
-    thumbnailUrl: "/placeholder.svg?height=200&width=300",
-    descriptionShort:
-      "Dịch vụ siêu âm tổng quát với công nghệ hiện đại, chẩn đoán chính xác.",
-    contentHtml: `<h2>Siêu âm tổng quát</h2>
-<p>Dịch vụ siêu âm tổng quát tại VitaCare Medical sử dụng công nghệ siêu âm 4D hiện đại nhất, giúp chẩn đoán chính xác các bệnh lý về nội tạng.</p>
+// <h3>Các loại siêu âm</h3>
+// <ul>
+//   <li>Siêu âm ổ bụng tổng quát</li>
+//   <li>Siêu âm tim</li>
+//   <li>Siêu âm tuyến giáp</li>
+//   <li>Siêu âm vú</li>
+//   <li>Siêu âm thai</li>
+// </ul>
 
-<h3>Các loại siêu âm</h3>
-<ul>
-  <li>Siêu âm ổ bụng tổng quát</li>
-  <li>Siêu âm tim</li>
-  <li>Siêu âm tuyến giáp</li>
-  <li>Siêu âm vú</li>
-  <li>Siêu âm thai</li>
-</ul>
+// <p><em>Đặt lịch: <strong>1900-1234</strong></em></p>`,
+//     status: "ACTIVE",
+//     createdAt: new Date().toISOString(),
+//     updatedAt: new Date().toISOString(),
+//     serviceType: serviceTypesMock[2],
+//   },
+// ];
 
-<p><em>Đặt lịch: <strong>1900-1234</strong></em></p>`,
-    status: "ACTIVE",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    serviceType: serviceTypesMock[2],
-  },
-];
-
+function mapServiceToPayload(
+  newService: Partial<Service>,
+  upload: boolean
+): any {
+  if (upload) {
+    return {
+      id: newService.id,
+      slug: newService.slug,
+      name: newService.name,
+      thumbnailUrl: newService.thumbnailUrl || "",
+      descriptionShort: newService.descriptionShort,
+      contentHtml: newService.contentHtml,
+      status: (newService.status as Service["status"]) || "ACTIVE",
+      serviceTypeId: newService.serviceType?.id,
+    };
+  }
+  return {
+    slug: newService.slug,
+    name: newService.name,
+    thumbnailUrl: newService.thumbnailUrl || "",
+    descriptionShort: newService.descriptionShort,
+    contentHtml: newService.contentHtml,
+    status: (newService.status as Service["status"]) || "ACTIVE",
+    serviceTypeId: newService.serviceType?.id,
+  };
+}
 export default function ServicesManagement() {
-  const [services, setServices] = useState<Service[]>(mockServices);
+  const [services, setServices] = useState<Service[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("ALL");
@@ -227,6 +241,19 @@ export default function ServicesManagement() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [deletingService, setDeletingService] = useState<Service | null>(null);
   const [viewingService, setViewingService] = useState<Service | null>(null);
+
+  const { serviceTypes, loading: loadingMeta, refetch } = useServiceMetadata();
+
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [newService, setNewService] = useState<Partial<Service>>({
     name: "",
     slug: "",
@@ -237,50 +264,45 @@ export default function ServicesManagement() {
     serviceType: undefined,
   });
 
-  // Filter Services
-  const filteredServices = services.filter((service) => {
-    const matchesSearch =
-      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.descriptionShort
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      service.slug.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || service.status === statusFilter;
-    const matchesServiceType =
-      serviceTypeFilter === "ALL" ||
-      service.serviceType.id.toString() === serviceTypeFilter;
+  const fetchServices = async () => {
+    try {
+      const data = await getServices(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter,
+        serviceTypeFilter !== "ALL" ? +serviceTypeFilter : undefined
+      );
+      console.log("Fetched services:", data);
 
-    return matchesSearch && matchesStatus && matchesServiceType;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
+      setServices(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách dịch vụ:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
     }
   };
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
+
+  // Simulate API call
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchServices();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  const handleRetry = async () => {
+    setLoading(true);
+    setError(null);
+    fetchServices();
   };
 
   const addImage = useCallback(
@@ -304,23 +326,11 @@ export default function ServicesManagement() {
     [editingService]
   );
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
-
-  const handleAddService = () => {
+  const handleAddService = async () => {
     if (!newService.name || !newService.contentHtml || !newService.serviceType)
       return;
 
-    const service: Service = {
-      id: Date.now(),
+    const service: Partial<Service> = {
       slug: newService.slug || generateSlug(newService.name),
       name: newService.name,
       thumbnailUrl: newService.thumbnailUrl || "",
@@ -329,12 +339,48 @@ export default function ServicesManagement() {
         stripHtml(newService.contentHtml).slice(0, 120),
       contentHtml: newService.contentHtml,
       status: (newService.status as Service["status"]) || "ACTIVE",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
       serviceType: newService.serviceType,
     };
 
-    setServices([...services, service]);
+    try {
+      const { code, message, result } = await addService(
+        mapServiceToPayload(service, false)
+      );
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm dịch vụ thành công!",
+          variant: "success",
+        });
+        setServices((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm dịch vụ thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding service:", error);
+      let message = "Thêm dịch vụ thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
     setNewService({
       name: "",
       slug: "",
@@ -351,23 +397,53 @@ export default function ServicesManagement() {
     setEditingService(service);
   };
 
-  const handleUpdateService = () => {
+  const handleUpdateService = async () => {
     if (!editingService) return;
 
-    const updatedService = {
-      ...editingService,
-      updatedAt: new Date().toISOString(),
-      descriptionShort:
-        editingService.descriptionShort ||
-        stripHtml(editingService.contentHtml).slice(0, 120),
-    };
+    try {
+      const { code, message, result } = await updateService(
+        editingService.id,
+        mapServiceToPayload(editingService, true)
+      );
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Cập nhật dịch vụ thành công!",
+          variant: "success",
+        });
+        setServices((prev) =>
+          prev.map((s) => (s.id === result.id ? result : s))
+        );
+      } else {
+        throw new Error(message || "Cập nhật dịch vụ thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding service:", error);
+      let message = "Cập nhật dịch vụ thất bại!";
 
-    setServices(
-      services.map((service) =>
-        service.id === editingService.id ? updatedService : service
-      )
-    );
-    setEditingService(null);
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setEditingService(null);
+    }
   };
 
   const handleDeleteService = () => {
@@ -383,19 +459,44 @@ export default function ServicesManagement() {
     setDeletingService(null);
   };
 
-  const stripHtml = (html: string) => {
-    return html.replace(/<[^>]*>/g, "");
-  };
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  //loading
+  if (loading) return <ServicesSkeleton />;
+
+  //err
+  if (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof (error as any).message === "string" &&
+      ((error as any).message.includes("network") ||
+        (error as any).message.includes("fetch"))
+    ) {
+      return (
+        <ServicesError
+          type="network"
+          error={error as Error}
+          onRetry={handleRetry}
+        />
+      );
+    } else {
+      return (
+        <ServicesError
+          type="general"
+          error={error as Error}
+          onRetry={handleRetry}
+        />
+      );
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -463,19 +564,26 @@ export default function ServicesManagement() {
                   <div className="grid gap-2">
                     <Label htmlFor="serviceType">Loại dịch vụ *</Label>
                     <Select
+                      disabled={loadingMeta}
                       value={newService.serviceType?.id.toString()}
                       onValueChange={(value) => {
-                        const serviceType = serviceTypesMock.find(
+                        const serviceType = serviceTypes.find(
                           (st) => st.id.toString() === value
                         );
                         setNewService({ ...newService, serviceType });
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn loại dịch vụ" />
+                        <SelectValue
+                          placeholder={
+                            loadingMeta
+                              ? "Đang tải dữ liệu ..."
+                              : "Chọn loại dịch vụ"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {serviceTypesMock.map((type) => (
+                        {serviceTypes.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
                             {type.name}
                           </SelectItem>
@@ -500,7 +608,12 @@ export default function ServicesManagement() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="thumbnail">Ảnh thu nhỏ</Label>
-                    <ImageUpload onImageSelect={addImage} maxSize={5} />
+                    <ImageUpload
+                      initialImage={newService.thumbnailUrl}
+                      onImageSelect={addImage}
+                      folder={"services"}
+                      maxSize={5}
+                    />
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <div className="flex items-start gap-2">
                         <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
@@ -605,7 +718,7 @@ export default function ServicesManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Tất cả loại dịch vụ</SelectItem>
-                {serviceTypesMock.map((type) => (
+                {serviceTypes.map((type) => (
                   <SelectItem key={type.id} value={type.id.toString()}>
                     {type.name}
                   </SelectItem>
@@ -709,7 +822,7 @@ export default function ServicesManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredServices.map((service) => (
+                {services.map((service) => (
                   <TableRow key={service.id}>
                     <TableCell>
                       {service.thumbnailUrl ? (
@@ -769,7 +882,10 @@ export default function ServicesManagement() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              window.open(`/services/${service.slug}`, "_blank")
+                              window.open(
+                                `/dich-vu/${service.slug}-${service.id}`,
+                                "_blank"
+                              )
                             }
                           >
                             <ExternalLink className="mr-2 h-4 w-4" />
@@ -798,7 +914,7 @@ export default function ServicesManagement() {
           </div>
 
           {/* No results */}
-          {filteredServices.length === 0 && (
+          {services.length === 0 && (
             <div className="text-center py-12">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -811,6 +927,100 @@ export default function ServicesManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, services.length)} trong tổng
+            số {totalItems} loại dịch vụ
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* View Dialog */}
       {viewingService && (
@@ -933,7 +1143,7 @@ export default function ServicesManagement() {
                     <Select
                       value={editingService.serviceType.id.toString()}
                       onValueChange={(value) => {
-                        const serviceType = serviceTypesMock.find(
+                        const serviceType = serviceTypes.find(
                           (st) => st.id.toString() === value
                         );
                         if (serviceType) {
@@ -945,7 +1155,7 @@ export default function ServicesManagement() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {serviceTypesMock.map((type) => (
+                        {serviceTypes.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
                             {type.name}
                           </SelectItem>
