@@ -28,8 +28,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChuyenKhoaSkeleton } from "./chuyen-khoa-skeleton";
-import { ChuyenKhoaError } from "./chuyen-khoa-error";
+import { ChuyenKhoaSkeleton } from "./department-skeleton";
+import { ChuyenKhoaError } from "./department-error";
 
 // Function to create slug from name and id
 const createSlug = (name: string, id: number): string => {

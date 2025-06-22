@@ -1,4 +1,10 @@
-import type { Department, Position, Specialty, Title } from "@/types";
+import type {
+  Department,
+  Position,
+  ServiceType,
+  Specialty,
+  Title,
+} from "@/types";
 import api from "@/utils/axios";
 import { check } from "@/utils/helper.checkResponse";
 
@@ -14,8 +20,10 @@ async function fetchSearch<T>(
   if (status && status !== "ALL") params.status = status;
 
   const res = await api.get(url, { params });
-  const result = check(res.data) as { content?: T[] };
-  return (result?.content ?? []) as T[];
+  const result = check(res.data) as {
+    items: T[];
+  };
+  return result.items as T[];
 }
 
 // Fetch danh sách khoa phòng
@@ -38,6 +46,11 @@ export async function fetchTitles(): Promise<Title[]> {
 
 export async function fetchSpecialties(): Promise<Specialty[]> {
   const res = await api.get("/specialties");
+  return check(res.data);
+}
+
+export async function fetchServiceTypes(): Promise<ServiceType[]> {
+  const res = await api.get("service-types");
   return check(res.data);
 }
 
@@ -73,6 +86,19 @@ export async function fetchSpecialtiesWithSearch(
 ): Promise<Specialty[]> {
   return fetchSearch<Specialty>(
     "/specialties/search",
+    0,
+    1000,
+    keyword,
+    status
+  );
+}
+
+export async function fetchServiceTypesWithSearch(
+  keyword?: string,
+  status?: string
+): Promise<ServiceType[]> {
+  return fetchSearch<ServiceType>(
+    "/service-types/search",
     0,
     1000,
     keyword,

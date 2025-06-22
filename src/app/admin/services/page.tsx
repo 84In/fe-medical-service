@@ -1,4 +1,4 @@
-import ServicesClientPage from "./ServicesClientPage";
+import ServicesClientPage from "@/components/admin/services/services-client-page";
 
 export default function ServicesPage() {
   return (

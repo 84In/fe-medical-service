@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
+import { useDoctorMetadata } from "@/hooks/doctor/use-doctor-metadata";
 import { toast } from "@/hooks/use-toast";
 import { addDoctor } from "@/services";
 import { Achievement, Doctor, WorkingHour } from "@/types";

@@ -37,7 +37,7 @@ import {
 import { MultiSelect } from "@/components/ui/multi-select";
 import { ImageUpload } from "@/components/image-upload";
 import { useCallback } from "react";
-import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
+import { useDoctorMetadata } from "@/hooks/doctor/use-doctor-metadata";
 interface DoctorFormProps {
   editingDoctor: Doctor;
   setEditingDoctor: React.Dispatch<React.SetStateAction<Doctor | null>>;

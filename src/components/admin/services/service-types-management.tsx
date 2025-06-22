@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,8 +59,19 @@ import {
   Clock,
   Trash2,
   FileText,
+  ChevronsRight,
+  ChevronsLeft,
 } from "lucide-react";
 import type { ServiceType } from "@/types";
+import { ServiceTypesSkeleton } from "./service-types-skeleton";
+import { ServiceTypesError } from "./service-types-error";
+import {
+  addserviceType,
+  getserviceTypes,
+  updateserviceType,
+} from "@/services/service-types.service";
+import { toast } from "@/hooks/use-toast";
+import { getStatusColor, getStatusText } from "@/utils/status-css";
 
 // Mock data
 const mockServiceTypes: ServiceType[] = [
@@ -99,8 +110,7 @@ const mockServiceTypes: ServiceType[] = [
 ];
 
 export default function ServiceTypesManagement() {
-  const [serviceTypes, setServiceTypes] =
-    useState<ServiceType[]>(mockServiceTypes);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -116,58 +126,126 @@ export default function ServiceTypesManagement() {
     status: "ACTIVE",
   });
 
-  // Filter Service Types
-  const filteredServiceTypes = serviceTypes.filter((serviceType) => {
-    const matchesSearch =
-      serviceType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      serviceType.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || serviceType.status === statusFilter;
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-    return matchesSearch && matchesStatus;
-  });
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
+  const fetchServiceTypes = async () => {
+    try {
+      const data = await getserviceTypes(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter
+      );
+      console.log("Fetched doctors:", data);
+
+      setServiceTypes(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách loại dịch vụ:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
+  // Simulate API call
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchServiceTypes();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  const handleRetry = async () => {
+    setLoading(true);
+    setError(null);
+    fetchServiceTypes();
   };
 
-  const handleAddServiceType = () => {
+  // Show skeleton while loading
+  if (loading) {
+    return <ServiceTypesSkeleton />;
+  }
+
+  // Show error if there's an error
+  if (error) {
+    return (
+      <ServiceTypesError
+        error={error}
+        onRetry={handleRetry}
+        type={error.message.includes("mạng") ? "network" : "general"}
+      />
+    );
+  }
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+
+  const handleAddServiceType = async () => {
     if (!newServiceType.name || !newServiceType.description) return;
 
-    const serviceType: ServiceType = {
-      id: Date.now(),
+    const serviceType: Partial<ServiceType> = {
       name: newServiceType.name,
       description: newServiceType.description,
       status: (newServiceType.status as ServiceType["status"]) || "ACTIVE",
     };
 
-    setServiceTypes([...serviceTypes, serviceType]);
+    try {
+      const { code, message, result } = await addserviceType(serviceType);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm loại dịch vụ thành công!",
+          variant: "success",
+        });
+        setServiceTypes((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm loại dịch vụ thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding service types:", error);
+      let message = "Thêm loại dịch vụ thất bại!";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as any).response === "object" &&
+        (error as any).response !== null &&
+        "data" in (error as any).response &&
+        typeof (error as any).response.data === "object" &&
+        (error as any).response.data !== null &&
+        "message" in (error as any).response.data
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
     setNewServiceType({
       name: "",
       description: "",
@@ -180,17 +258,38 @@ export default function ServiceTypesManagement() {
     setEditingServiceType(serviceType);
   };
 
-  const handleUpdateServiceType = () => {
+  const handleUpdateServiceType = async () => {
     if (!editingServiceType) return;
 
-    setServiceTypes(
-      serviceTypes.map((serviceType) =>
-        serviceType.id === editingServiceType.id
-          ? editingServiceType
-          : serviceType
-      )
-    );
-    setEditingServiceType(null);
+    try {
+      const { code, message, result } = await updateserviceType(
+        editingServiceType.id,
+        editingServiceType
+      );
+
+      if (code === 0) {
+        setServiceTypes((prev) =>
+          prev.map((st) => (st.id === result.id ? result : st))
+        );
+        toast({
+          title: "Thành công!",
+          description: " Cập nhật loại dịch vụ thành công!",
+          variant: "success",
+        });
+      } else {
+        throw new Error(message || "Cập nhật loại dịch vụ thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật loại dịch vụ:", error);
+      toast({
+        title: "Thất bại!",
+        description:
+          error instanceof Error ? error.message : "Cập nhật thất bại!",
+        variant: "destructive",
+      });
+    } finally {
+      setEditingServiceType(null);
+    }
   };
 
   const handleDeleteServiceType = () => {
@@ -407,7 +506,7 @@ export default function ServiceTypesManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredServiceTypes.map((serviceType) => (
+                {serviceTypes.map((serviceType) => (
                   <TableRow key={serviceType.id}>
                     <TableCell className="font-medium">
                       {serviceType.name}
@@ -459,7 +558,7 @@ export default function ServiceTypesManagement() {
           </div>
 
           {/* No results */}
-          {filteredServiceTypes.length === 0 && (
+          {serviceTypes.length === 0 && (
             <div className="text-center py-12">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -472,6 +571,100 @@ export default function ServiceTypesManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, serviceTypes.length)} trong
+            tổng số {totalItems} loại dịch vụ
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* View Dialog */}
       {viewingServiceType && (
