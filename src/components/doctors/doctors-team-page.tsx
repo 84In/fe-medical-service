@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
 import {
   Select,
   SelectContent,
@@ -13,9 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
+import { getDoctors } from "@/services";
+import { fetchDepartments } from "@/services/metadata.service";
 import { Department, type Doctor } from "@/types/doctor";
+import { toSlug } from "@/utils/slugify";
+import { motion } from "framer-motion";
 import {
   ChevronRight,
   ChevronsLeft,
@@ -23,12 +24,10 @@ import {
   Home,
   PhoneCall,
 } from "lucide-react";
-import { getDoctors } from "@/services";
-import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
-import { toSlug } from "@/utils/slugify";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { DoiNguBacSiError } from "./doctor-error";
 import { DoctorsTeamSkeleton } from "./doctors-team-skeleton";
-import { fetchDepartments } from "@/services/metadata.service";
-import { DoiNguBacSiError } from "./bac-si-error";
 
 export function DoctorsTeamPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,6 +72,7 @@ export function DoctorsTeamPage() {
 
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, departmentFilter]);
+
   useEffect(() => {
     fetchAllDepartments();
   }, []);

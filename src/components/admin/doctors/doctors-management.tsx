@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDoctorMetadata } from "@/hooks/doctor/useDoctorMetadata";
+import { useDoctorMetadata } from "@/hooks/doctor/use-doctor-metadata";
 import { addDoctor, getDoctors, updateDoctor } from "@/services";
 import type { Doctor, WorkingHour } from "@/types/doctor";
 import {
@@ -47,6 +47,7 @@ import {
 import { EditDoctorForm } from "./edit-doctor";
 import DoctorForm from "./new-doctor";
 import { toast } from "@/hooks/use-toast";
+import { getStatusColor } from "@/utils/status-css";
 
 const dayOfWeekOptions = [
   { value: "MONDAY", label: "Thứ 2" },
@@ -138,21 +139,6 @@ export function DoctorsManagement() {
     setCurrentPage((prev) => Math.max(1, prev - 1));
   const goToNextPage = () =>
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
 
   const handleEditDoctor = (doctor: Doctor) => {
     setEditingDoctor(doctor);
