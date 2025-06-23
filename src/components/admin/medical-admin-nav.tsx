@@ -32,15 +32,15 @@ import {
   LogOut,
   Menu,
   Newspaper,
-  Search,
   Stethoscope,
   UserCheck,
   Users,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface NavItem {
   title: string;
@@ -135,6 +135,7 @@ export function MedicalAdminNav() {
   const [activeItem, setActiveItem] = useState("Dashboard");
   const pathname = usePathname();
   const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>
@@ -186,7 +187,8 @@ export function MedicalAdminNav() {
   }, [pathname]);
 
   const handleLogout = () => {
-    alert("Logout");
+    logout();
+    router.push("/");
   };
 
   return (
