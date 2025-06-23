@@ -181,17 +181,6 @@ export default function ServiceTypesManagement() {
     return <ServiceTypesSkeleton />;
   }
 
-  // Show error if there's an error
-  if (error) {
-    return (
-      <ServiceTypesError
-        error={error}
-        onRetry={handleRetry}
-        type={error.message.includes("mạng") ? "network" : "general"}
-      />
-    );
-  }
-
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
   const goToFirstPage = () => setCurrentPage(1);
   const goToLastPage = () => setCurrentPage(totalPages);
@@ -225,21 +214,11 @@ export default function ServiceTypesManagement() {
       console.error("Error adding service types:", error);
       let message = "Thêm loại dịch vụ thất bại!";
 
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof (error as any).response === "object" &&
-        (error as any).response !== null &&
-        "data" in (error as any).response &&
-        typeof (error as any).response.data === "object" &&
-        (error as any).response.data !== null &&
-        "message" in (error as any).response.data
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error && error.message) {
-        message = error.message;
-      }
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
       toast({
         title: "Thất bại!",
         description: message,
@@ -304,6 +283,24 @@ export default function ServiceTypesManagement() {
     );
     setDeletingServiceType(null);
   };
+
+  if (error) {
+    const errorType = error.message.includes("network") ? "network" : "general";
+    return (
+      <ServiceTypesError type={errorType} error={error} onRetry={handleRetry} />
+    );
+  }
+
+  // Show not found if no data
+  if (serviceTypes.length === 0) {
+    return (
+      <ServiceTypesError
+        type="not-found"
+        createNew={() => setIsAddDialogOpen(true)}
+        onRetry={handleRetry}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -54,6 +54,11 @@ export async function fetchServiceTypes(): Promise<ServiceType[]> {
   return check(res.data);
 }
 
+export async function fetchNewsTypes(): Promise<ServiceType[]> {
+  const res = await api.get("news-types");
+  return check(res.data);
+}
+
 export async function fetchDepartmentsWithSearch(
   keyword?: string,
   status?: string
@@ -99,6 +104,19 @@ export async function fetchServiceTypesWithSearch(
 ): Promise<ServiceType[]> {
   return fetchSearch<ServiceType>(
     "/service-types/search",
+    0,
+    1000,
+    keyword,
+    status
+  );
+}
+
+export async function fetchNewsTypesWithSearch(
+  keyword?: string,
+  status?: string
+): Promise<ServiceType[]> {
+  return fetchSearch<ServiceType>(
+    "/news-types/search",
     0,
     1000,
     keyword,
