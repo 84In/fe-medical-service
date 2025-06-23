@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -45,8 +45,19 @@ import {
   Activity,
   Clock,
   Users,
+  ChevronsRight,
+  ChevronsLeft,
 } from "lucide-react";
 import type { NewsType } from "@/types/news";
+import {
+  addNewsTypes,
+  getNewsTypes,
+  updateNewsTypes,
+} from "@/services/news-types.service";
+import { getStatusColor, getStatusText } from "@/utils/status-css";
+import { NewsTypesSkeleton } from "./news-types-skeleton";
+import { NewsTypesError } from "./news-types-error";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockNewsTypes: NewsType[] = [
@@ -86,43 +97,132 @@ export function NewsTypesManagement() {
   const [selectedNewsType, setSelectedNewsType] = useState<NewsType | null>(
     null
   );
+
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [formData, setFormData] = useState({
     name: "",
     status: "ACTIVE" as NewsType["status"],
   });
 
-  // Filter news types
-  const filteredNewsTypes = newsTypes.filter((newsType) => {
-    const matchesSearch = newsType.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || newsType.status === statusFilter;
-    return matchesSearch && matchesStatus && newsType.status !== "DELETED";
-  });
+  const fetchNewsTypes = async () => {
+    try {
+      const data = await getNewsTypes(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter
+      );
+      console.log("Fetched NewsTypes:", data);
 
-  const handleCreate = () => {
-    const newNewsType: NewsType = {
-      id: Math.max(...newsTypes.map((nt) => nt.id)) + 1,
+      setNewsTypes(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách dịch vụ:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simulate API call
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchNewsTypes();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  const handleRetry = async () => {
+    setLoading(true);
+    setError(null);
+    fetchNewsTypes();
+  };
+
+  const handleCreate = async () => {
+    const newNewsType: Partial<NewsType> = {
       name: formData.name,
       status: formData.status,
     };
-    setNewsTypes([...newsTypes, newNewsType]);
-    setIsCreateDialogOpen(false);
+
+    try {
+      const { code, message, result } = await addNewsTypes(newNewsType);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm loại tin tức thành công!",
+          variant: "success",
+        });
+        setNewsTypes((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêm loại tin tức thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding news types:", error);
+      let message = "Thêm loại tin tức thất bại!";
+
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
     resetForm();
+    setIsCreateDialogOpen(false);
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!selectedNewsType) return;
-    setNewsTypes(
-      newsTypes.map((newsType) =>
-        newsType.id === selectedNewsType.id
-          ? { ...newsType, name: formData.name, status: formData.status }
-          : newsType
-      )
-    );
-    setIsEditDialogOpen(false);
-    resetForm();
+    try {
+      const { code, message, result } = await updateNewsTypes(
+        selectedNewsType.id,
+        formData
+      );
+
+      if (code === 0) {
+        setNewsTypes((prev) =>
+          prev.map((nt) => (nt.id === result.id ? result : nt))
+        );
+        toast({
+          title: "Thành công!",
+          description: " Cập nhật loại tin tức thành công!",
+          variant: "success",
+        });
+      } else {
+        throw new Error(message || "Cập nhật loại tin tức thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật loại tin tức:", error);
+      toast({
+        title: "Thất bại!",
+        description:
+          error instanceof Error ? error.message : "Cập nhật thất bại!",
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedNewsType(null);
+      setIsEditDialogOpen(false);
+      resetForm();
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -150,34 +250,94 @@ export function NewsTypesManagement() {
     setIsEditDialogOpen(true);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
-  };
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-    }
-  };
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+
+  if (loading) return <NewsTypesSkeleton />;
+  // Show error if there's an error
+  if (error) {
+    const errorType = error.message.includes("network") ? "network" : "general";
+    return (
+      <NewsTypesError type={errorType} error={error} onRetry={handleRetry} />
+    );
+  }
+
+  // Show not found if no data
+  if (newsTypes.length === 0) {
+    return (
+      <>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              onClick={() => resetForm()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm loại tin tức
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Thêm loại tin tức mới</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Tên loại tin tức</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Nhập tên loại tin tức"
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Trạng thái</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: NewsType["status"]) =>
+                    setFormData({ ...formData, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                    <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
+                    <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
+                  Hủy
+                </Button>
+                <Button onClick={handleCreate} disabled={!formData.name.trim()}>
+                  Tạo loại tin tức
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <NewsTypesError
+          type="not-found"
+          creatNew={() => setIsCreateDialogOpen(true)}
+          onRetry={handleRetry}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -347,9 +507,7 @@ export function NewsTypesManagement() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Danh sách loại tin tức ({filteredNewsTypes.length})
-          </CardTitle>
+          <CardTitle>Danh sách loại tin tức ({newsTypes.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -362,15 +520,15 @@ export function NewsTypesManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredNewsTypes.map((newsType) => (
+              {newsTypes.map((newsType) => (
                 <TableRow key={newsType.id}>
                   <TableCell className="font-medium">#{newsType.id}</TableCell>
                   <TableCell>
                     <div className="font-medium">{newsType.name}</div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(formData.status)}>
-                      {getStatusText(formData.status)}
+                    <Badge className={getStatusColor(newsType.status)}>
+                      {getStatusText(newsType.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -402,7 +560,7 @@ export function NewsTypesManagement() {
             </TableBody>
           </Table>
 
-          {filteredNewsTypes.length === 0 && (
+          {newsTypes.length === 0 && (
             <div className="text-center py-8">
               <div className="text-gray-500">
                 Không tìm thấy loại tin tức nào
@@ -411,6 +569,100 @@ export function NewsTypesManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, newsTypes.length)} trong tổng
+            số {totalItems} loại tin tức
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

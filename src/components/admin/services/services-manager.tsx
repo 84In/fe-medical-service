@@ -472,30 +472,15 @@ export default function ServicesManagement() {
 
   //err
   if (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "message" in error &&
-      typeof (error as any).message === "string" &&
-      ((error as any).message.includes("network") ||
-        (error as any).message.includes("fetch"))
-    ) {
-      return (
-        <ServicesError
-          type="network"
-          error={error as Error}
-          onRetry={handleRetry}
-        />
-      );
-    } else {
-      return (
-        <ServicesError
-          type="general"
-          error={error as Error}
-          onRetry={handleRetry}
-        />
-      );
-    }
+    const errorType = error.message.includes("network") ? "network" : "general";
+    return (
+      <ServicesError type={errorType} error={error} onRetry={handleRetry} />
+    );
+  }
+
+  // Show not found if no data
+  if (services.length === 0) {
+    return <ServicesError type="not-found" onRetry={handleRetry} />;
   }
 
   return (

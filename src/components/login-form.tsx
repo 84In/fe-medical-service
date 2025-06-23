@@ -1,16 +1,16 @@
 "use client";
-import { GalleryVerticalEnd } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 import axios from "@/utils/axios";
 import { isAxiosError } from "axios";
-
+import { setCookie } from "cookies-next";
+import { GalleryVerticalEnd } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FormData = {
@@ -24,12 +24,9 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const router = useRouter();
   const [error, setError] = useState("");
-  // const token = useAuthStore((state) => state.token);
-  // const user = useAuthStore((state) => state.user);
-  // const username = useAuthStore((state) => state.username);
+
   const setToken = useAuthStore((state) => state.setToken);
   const setUsername = useAuthStore((state) => state.setUsername);
-  // const logout = useAuthStore((state) => state.logout);
   const fetchUserData = useAuthStore((state) => state.fetchUser);
 
   const {
@@ -42,11 +39,33 @@ export function LoginForm({
     setError("");
     try {
       const res = await axios.post("/auth/login", data);
+
       if (res.data.code === 0) {
-        setToken(res.data.result.token);
-        setUsername(res.data.result.username);
-        fetchUserData();
-        router.push("/admin");
+        const { token, username } = res.data.result;
+
+        // 1. Set token và username trước để fetchUser dùng được
+        setToken(token);
+        setUsername(username);
+
+        // 2. Set cookie để middleware đọc được
+        setCookie("access_token", token, { maxAge: 60 * 60 * 24, path: "/" });
+        setCookie("username", username, { maxAge: 60 * 60 * 24, path: "/" });
+
+        // 3. Gọi fetchUser để lấy thông tin user (có role)
+        await fetchUserData();
+
+        const user = useAuthStore.getState().user;
+        if (user?.role?.name) {
+          setCookie("user_role", user.role.name, {
+            maxAge: 60 * 60 * 24,
+            path: "/",
+          });
+        }
+
+        // 4. Chờ 1s rồi chuyển hướng
+        setTimeout(() => {
+          router.push("/admin");
+        }, 1000);
       } else {
         setError(res.data.message || "Đăng nhập thất bại");
       }
@@ -119,7 +138,9 @@ export function LoginForm({
               {isSubmitting ? "Đang đăng nhập..." : "Login"}
             </Button>
             {error && (
-              <p className="text-center text-red-600 text-sm mt-2">{error}</p>
+              <p className="text-center text-red-600 text-sm mt-2">
+                Tài khoản và mật khẩu không hợp lệ!
+              </p>
             )}
           </div>
           <div className="text-center text-sm text-muted-foreground">

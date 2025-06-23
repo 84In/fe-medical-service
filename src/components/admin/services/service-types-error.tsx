@@ -15,12 +15,14 @@ import { useState } from "react";
 interface ServiceTypesErrorProps {
   error?: Error | null;
   onRetry?: () => void;
+  createNew?: () => void;
   type?: "network" | "not-found" | "general";
 }
 
 export function ServiceTypesError({
   error,
   onRetry,
+  createNew,
   type = "general",
 }: ServiceTypesErrorProps) {
   const [isRetrying, setIsRetrying] = useState(false);
@@ -129,7 +131,7 @@ export function ServiceTypesError({
             )}
 
             {type === "not-found" && (
-              <Button variant="outline">
+              <Button variant="outline" onClick={createNew}>
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm loại dịch vụ đầu tiên
               </Button>
