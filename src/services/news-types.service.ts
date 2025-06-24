@@ -80,3 +80,40 @@ export const getNewsTypesByIdServer = async (
     return null;
   }
 };
+export const fetchNewsTypes = async (
+  page = 0,
+  size = 9,
+  keyword?: string,
+  status?: string
+): Promise<PaginatedResponse<NewsType>> => {
+  const params: Record<string, any> = {
+    page,
+    size,
+  };
+
+  if (keyword && keyword.trim()) {
+    params.keyword = keyword.trim();
+  }
+
+  if (status && status !== "ALL") {
+    params.status = status;
+  }
+
+  const query = new URLSearchParams(params).toString();
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/news-types/search?${query}`,
+    {
+      cache: "no-store", // nếu không muốn cache ở server
+      next: { revalidate: 0 }, // hoặc dùng ISR với revalidate
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch news: ${res.status}`);
+  }
+
+  const data: ApiResponse<PaginatedResponse<NewsType>> = await res.json();
+
+  return data.result;
+};
