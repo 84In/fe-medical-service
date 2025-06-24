@@ -46,7 +46,7 @@ export default async function NewsDetail({
 }: {
   params: { slug: string };
 }) {
-  const article = await getNewsBySlug((await params).slug);
+  const article = await getNewsBySlug(params.slug);
 
   if (!article) {
     return (
