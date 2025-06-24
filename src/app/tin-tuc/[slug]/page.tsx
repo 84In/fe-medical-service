@@ -1,20 +1,18 @@
 import { NewsDetailPage } from "@/components/news/news-detail-page";
 import { Button } from "@/components/ui/button";
-import {
-  fetchNews,
-  getNews,
-  getNewsBySlugServer,
-} from "@/services/news.service";
+import { fetchNews, getNewsBySlugServer } from "@/services/news.service";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 const getNewsBySlug = (slug: string) => getNewsBySlugServer(slug);
+
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const article = await getNewsBySlug(params.slug);
+  const { slug } = await params;
+  const article = await getNewsBySlug(slug);
 
   if (!article) {
     return {
@@ -44,9 +42,10 @@ export async function generateMetadata({
 export default async function NewsDetail({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const article = await getNewsBySlug(params.slug);
+  const { slug } = await params;
+  const article = await getNewsBySlug(slug);
 
   if (!article) {
     return (
@@ -77,5 +76,6 @@ export default async function NewsDetail({
   const relatedNews = relatedNewsResponse.items.filter(
     (item) => item.id !== article.id
   );
+
   return <NewsDetailPage article={article} relatedNews={relatedNews} />;
 }
