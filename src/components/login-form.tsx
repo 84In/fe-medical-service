@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +10,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import axios from "@/utils/axios";
 import { isAxiosError } from "axios";
 import { setCookie } from "cookies-next";
-import { GalleryVerticalEnd } from "lucide-react";
+import { GalleryVerticalEnd, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -106,6 +108,7 @@ export function LoginForm({
                 id="username"
                 type="text"
                 placeholder="Nhập tên đăng nhập của bạn"
+                disabled={isSubmitting}
                 {...register("username", {
                   required: "Bạn chưa nhập tài khoản",
                 })}
@@ -123,6 +126,7 @@ export function LoginForm({
                 id="password"
                 type="password"
                 placeholder="Nhập mật khẩu của bạn"
+                disabled={isSubmitting}
                 {...register("password", {
                   required: "Bạn chưa nhập mật khẩu",
                 })}
@@ -135,7 +139,14 @@ export function LoginForm({
               )}
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Đang đăng nhập..." : "Login"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang đăng nhập...
+                </>
+              ) : (
+                "Đăng nhập"
+              )}
             </Button>
             {error && (
               <p className="text-center text-red-600 text-sm mt-2">

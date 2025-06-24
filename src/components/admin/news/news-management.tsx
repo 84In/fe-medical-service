@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -50,10 +50,20 @@ import {
   Building2,
   Clock,
   Users,
+  ChevronsRight,
+  ChevronsLeft,
 } from "lucide-react";
 import { TiptapEditor } from "../tiptap-editor";
 import { ImageUpload } from "../../image-upload";
 import type { News, NewsType } from "@/types";
+import { useNewsMetadata } from "@/hooks/news/use-news-metadata";
+import { generateSlug } from "@/utils/slugify";
+import { getStatusColor, getStatusText } from "@/utils/status-css";
+import { addNews, getNews, updateNews } from "@/services/news.service";
+import { NewsSkeleton } from "./news-skeleton";
+import { NewsError } from "./news-error";
+import { formatDate } from "@/utils/format-utils";
+import { toast } from "@/hooks/use-toast";
 
 // Mock data
 const mockNewsTypes: NewsType[] = [
@@ -116,8 +126,7 @@ const mockNews: News[] = [
 ];
 
 export function NewsManagement() {
-  const [news, setNews] = useState<News[]>(mockNews);
-  const [newsTypes] = useState<NewsType[]>(mockNewsTypes);
+  const [news, setNews] = useState<News[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
@@ -125,6 +134,18 @@ export function NewsManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
+
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const [totalPages, setTotalPages] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const { newsTypes, loading: newsTypeLoading, refetch } = useNewsMetadata();
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -135,89 +156,155 @@ export function NewsManagement() {
     newsTypeId: "",
   });
 
-  // Filter news
-  const filteredNews = news.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.descriptionShort.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "ALL" || item.status === statusFilter;
-    const matchesType =
-      typeFilter === "ALL" || item.newsType.id.toString() === typeFilter;
-    return (
-      matchesSearch && matchesStatus && matchesType && item.status !== "DELETED"
-    );
-  });
+  const fetchNews = async () => {
+    try {
+      const data = await getNews(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter,
+        typeFilter !== "ALL" ? +typeFilter : undefined
+      );
+      console.log("Fetched News:", data);
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/^-+|-+$/g, "");
+      setNews(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách tin tức:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = () => {
+  // Simulate API call
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchNews();
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, typeFilter]);
+
+  const handleRetry = async () => {
+    setLoading(true);
+    setError(null);
+    fetchNews();
+  };
+
+  const handleCreate = async () => {
     const selectedNewsType = newsTypes.find(
       (nt) => nt.id.toString() === formData.newsTypeId
     );
     if (!selectedNewsType) return;
 
-    const newNews: News = {
-      id: Math.max(...news.map((n) => n.id)) + 1,
-      name: formData.name,
-      slug: formData.slug || generateSlug(formData.name),
-      thumbnailUrl:
-        formData.thumbnailUrl || "/placeholder.svg?height=200&width=300",
-      descriptionShort: formData.descriptionShort,
-      contentHtml: formData.contentHtml,
-      status: formData.status,
-      newsType: selectedNewsType,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setNews([newNews, ...news]);
+    try {
+      const { code, message, result } = await addNews(formData);
+      if (code === 0) {
+        toast({
+          title: "Thành công!",
+          description: "Thêm tin tức thành công!",
+          variant: "success",
+        });
+        setNews((prev) => [...prev, result]);
+      } else {
+        throw new Error(message || "Thêmtin tức thất bại");
+      }
+    } catch (error) {
+      console.error("Error adding news:", error);
+      let message = "Thêm tin tức thất bại!";
+
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+      toast({
+        title: "Thất bại!",
+        description: message,
+        variant: "destructive",
+      });
+    }
     setIsCreateDialogOpen(false);
     resetForm();
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!selectedNews) return;
     const selectedNewsType = newsTypes.find(
       (nt) => nt.id.toString() === formData.newsTypeId
     );
     if (!selectedNewsType) return;
 
-    setNews(
-      news.map((item) =>
-        item.id === selectedNews.id
-          ? {
-              ...item,
-              name: formData.name,
-              slug: formData.slug || generateSlug(formData.name),
-              thumbnailUrl: formData.thumbnailUrl,
-              descriptionShort: formData.descriptionShort,
-              contentHtml: formData.contentHtml,
-              status: formData.status,
-              newsType: selectedNewsType,
-              updatedAt: new Date().toISOString(),
-            }
-          : item
-      )
-    );
-    setIsEditDialogOpen(false);
-    resetForm();
+    try {
+      const { code, message, result } = await updateNews(
+        selectedNewsType.id,
+        formData
+      );
+
+      if (code === 0) {
+        setNews((prev) =>
+          prev.map((nt) => (nt.id === result.id ? result : nt))
+        );
+        toast({
+          title: "Thành công!",
+          description: " Cập nhật tin tức thành công!",
+          variant: "success",
+        });
+      } else {
+        throw new Error(message || "Cập nhật tin tức thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật loại tin tức:", error);
+      toast({
+        title: "Thất bại!",
+        description:
+          error instanceof Error ? error.message : "Cập nhật thất bại!",
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedNews(null);
+      setIsEditDialogOpen(false);
+      resetForm();
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setNews(
-      news.map((item) =>
-        item.id === id ? { ...item, status: "DELETED" } : item
-      )
-    );
+  const handleDelete = async (id: number) => {
+    try {
+      const { code, message, result } = await updateNews(id, {
+        status: "DELETED",
+      });
+
+      if (code === 0) {
+        setNews((prev) =>
+          prev.map((nt) => (nt.id === result.id ? result : nt))
+        );
+        toast({
+          title: "Thành công!",
+          description: "Tin tức đã được chuyển sang trạng thái đã xoá.",
+          variant: "success",
+        });
+      } else {
+        throw new Error(message || "Xoá tin tức thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi xoá tin tức:", error);
+      toast({
+        title: "Thất bại!",
+        description:
+          error instanceof Error ? error.message : "Cập nhật thất bại!",
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedNews(null);
+      setIsEditDialogOpen(false);
+      resetForm();
+    }
   };
 
   const resetForm = () => {
@@ -252,44 +339,200 @@ export function NewsManagement() {
     setIsViewDialogOpen(true);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
-  };
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-    }
-  };
+  if (loading) return <NewsSkeleton />;
+  // Show error if there's an error
+  if (error) {
+    const errorType = error.message.includes("network") ? "network" : "general";
+    return <NewsError type={errorType} error={error} onRetry={handleRetry} />;
+  }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  if (news.length === 0) {
+    return (
+      <>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Thêm tin tức mới</DialogTitle>
+            </DialogHeader>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+                <TabsTrigger value="content">Nội dung</TabsTrigger>
+                <TabsTrigger value="settings">Cài đặt</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Tiêu đề tin tức *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        setFormData({
+                          ...formData,
+                          name,
+                          slug: generateSlug(name),
+                        });
+                      }}
+                      placeholder="Nhập tiêu đề tin tức"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="slug">Slug</Label>
+                    <Input
+                      id="slug"
+                      value={formData.slug}
+                      onChange={(e) =>
+                        setFormData({ ...formData, slug: e.target.value })
+                      }
+                      placeholder="duong-dan-url"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="newsType">Loại tin tức *</Label>
+                  <Select
+                    value={formData.newsTypeId}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, newsTypeId: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn loại tin tức" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {newsTypes
+                        .filter((nt) => nt.status === "ACTIVE")
+                        .map((type) => (
+                          <SelectItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="descriptionShort">Mô tả ngắn *</Label>
+                  <Textarea
+                    id="descriptionShort"
+                    value={formData.descriptionShort}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        descriptionShort: e.target.value,
+                      })
+                    }
+                    placeholder="Nhập mô tả ngắn cho tin tức"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label>Ảnh thumbnail</Label>
+                  <div className="mt-2">
+                    <ImageUpload
+                      onImageSelect={(url) =>
+                        setFormData({ ...formData, thumbnailUrl: url })
+                      }
+                      folder="news"
+                      initialImage={formData.thumbnailUrl}
+                      maxSize={5}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="content" className="space-y-4">
+                <div>
+                  <Label>Nội dung chi tiết</Label>
+                  <div className="mt-2">
+                    <TiptapEditor
+                      value={formData.contentHtml}
+                      onChange={(content) =>
+                        setFormData({ ...formData, contentHtml: content })
+                      }
+                      height={500}
+                      placeholder="Nhập nội dung chi tiết của tin tức..."
+                      templateCategories={["Tin tức"]}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-4">
+                <div>
+                  <Label htmlFor="status">Trạng thái</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: News["status"]) =>
+                      setFormData({ ...formData, status: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                      <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
+                      <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    Hướng dẫn SEO
+                  </h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Tiêu đề nên từ 50-60 ký tự</li>
+                    <li>• Mô tả ngắn nên từ 150-160 ký tự</li>
+                    <li>• Slug nên ngắn gọn và có từ khóa</li>
+                    <li>• Ảnh thumbnail kích thước khuyến nghị: 1200x630px</li>
+                  </ul>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={
+                  !formData.name.trim() ||
+                  !formData.descriptionShort.trim() ||
+                  !formData.newsTypeId
+                }
+              >
+                Tạo tin tức
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <NewsError
+          type="not-found"
+          creatNew={() => setIsCreateDialogOpen(true)}
+          onRetry={handleRetry}
+        />
+      </>
+    );
+  }
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
   return (
     <div className="space-y-6">
@@ -399,6 +642,7 @@ export function NewsManagement() {
                       onImageSelect={(url) =>
                         setFormData({ ...formData, thumbnailUrl: url })
                       }
+                      folder="news"
                       initialImage={formData.thumbnailUrl}
                       maxSize={5}
                     />
@@ -535,7 +779,7 @@ export function NewsManagement() {
               <Building2 className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng dịch vụ
+                  Tổng tin tức
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {news.length}
@@ -590,7 +834,7 @@ export function NewsManagement() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách tin tức ({filteredNews.length})</CardTitle>
+          <CardTitle>Danh sách tin tức ({news.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -606,7 +850,7 @@ export function NewsManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredNews.map((newsItem) => (
+              {news.map((newsItem) => (
                 <TableRow key={newsItem.id}>
                   <TableCell>
                     <img
@@ -634,8 +878,8 @@ export function NewsManagement() {
                     <Badge variant="outline">{newsItem.newsType.name}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(formData.status)}>
-                      {getStatusText(formData.status)}
+                    <Badge className={getStatusColor(newsItem.status)}>
+                      {getStatusText(newsItem.status)}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -659,7 +903,7 @@ export function NewsManagement() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
-                            window.open(`/news/${newsItem.slug}`, "_blank")
+                            window.open(`/tin-tuc/${newsItem.slug}`, "_blank")
                           }
                         >
                           <ExternalLink className="mr-2 h-4 w-4" />
@@ -686,13 +930,107 @@ export function NewsManagement() {
             </TableBody>
           </Table>
 
-          {filteredNews.length === 0 && (
+          {news.length === 0 && (
             <div className="text-center py-8">
               <div className="text-gray-500">Không tìm thấy tin tức nào</div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Hiển thị</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number.parseInt(value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục mỗi trang</span>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Hiển thị {currentPage * itemsPerPage - itemsPerPage + 1} -{" "}
+            {Math.min(currentPage * itemsPerPage, news.length)} trong tổng số{" "}
+            {totalItems} loại tin tức
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              Trước
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNumber}
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => paginate(pageNumber)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNumber}
+                </Button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Sau
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -779,6 +1117,7 @@ export function NewsManagement() {
                     onImageSelect={(url) =>
                       setFormData({ ...formData, thumbnailUrl: url })
                     }
+                    folder="news"
                     initialImage={formData.thumbnailUrl}
                     maxSize={5}
                   />
