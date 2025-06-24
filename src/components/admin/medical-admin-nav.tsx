@@ -248,7 +248,10 @@ export function MedicalAdminNav() {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem
+                  className="hover:cursor-pointer"
+                  onClick={handleLogout}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Đăng xuất</span>
                 </DropdownMenuItem>
@@ -391,7 +394,7 @@ export function MedicalAdminNav() {
           </div>
           <div
             onClick={handleLogout}
-            className="flex px-4 py-2 justify-center rounded-md border-none items-center hover:bg-gray-800 hover:text-gray-200 text-gray-700"
+            className="flex px-4 py-2 justify-center rounded-md border-none items-center hover:cursor-pointer hover:bg-gray-800 hover:text-gray-200 text-gray-700"
           >
             <LogOut className="mr-2 h-6 w-6" />
           </div>
