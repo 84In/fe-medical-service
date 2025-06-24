@@ -9,7 +9,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 const getNewsBySlug = (slug: string) => getNewsBySlugServer(slug);
-
 export async function generateMetadata({
   params,
 }: {
