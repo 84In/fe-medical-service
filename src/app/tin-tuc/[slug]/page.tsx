@@ -9,7 +9,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 const getNewsBySlug = (slug: string) => getNewsBySlugServer(slug);
-
 export async function generateMetadata({
   params,
 }: {
@@ -47,7 +46,7 @@ export default async function NewsDetail({
 }: {
   params: { slug: string };
 }) {
-  const article = await getNewsBySlug((await params).slug);
+  const article = await getNewsBySlug(params.slug);
 
   if (!article) {
     return (
