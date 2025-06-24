@@ -8,17 +8,14 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
-// Mock function to get news data for metadata
-const getNewsBySlug = (slug: string) => {
-  return getNewsBySlugServer(slug);
-};
+const getNewsBySlug = (slug: string) => getNewsBySlugServer(slug);
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }): Promise<Metadata> {
-  const article = await getNewsBySlug((await params).slug);
+  const article = await getNewsBySlug(params.slug);
 
   if (!article) {
     return {
