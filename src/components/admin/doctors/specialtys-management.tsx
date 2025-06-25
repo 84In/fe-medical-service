@@ -69,62 +69,12 @@ import {
   SpecialtiesLoadingSkeleton,
 } from "./specialty-skeleton";
 import { toast } from "@/hooks/use-toast";
+import { getStatusColor, getStatusText } from "@/utils/status-css";
 
 // Mock data
-const mockSpecialtys: Specialty[] = [
-  {
-    id: 1,
-    name: "Phẫu thuật tim",
-    description:
-      "Có trách nhiệm thực hiện các ca phẫu thuật tim mạch, bao gồm phẫu thuật bắc cầu động mạch vành, thay van tim, và các thủ thuật khác liên quan đến tim mạch.",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Điện tâm đồ",
-    description:
-      "Chuyên môn trong việc thực hiện và phân tích điện tâm đồ (ECG) để chẩn đoán các vấn đề về nhịp tim và chức năng tim.",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Chuyên viên dinh dưỡng",
-    description:
-      "Chuyên gia tư vấn dinh dưỡng cho bệnh nhân, giúp họ xây dựng chế độ ăn uống hợp lý để hỗ trợ điều trị và phục hồi sức khỏe.",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Vật lý trị liệu",
-    description:
-      "Chuyên gia thực hiện các liệu pháp vật lý để giúp bệnh nhân phục hồi chức năng sau chấn thương hoặc phẫu thuật.",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "Nội soi tiêu hóa",
-    description:
-      "Bác sĩ chuyên thực hiện các thủ thuật nội soi để chẩn đoán và điều trị các vấn đề liên quan đến hệ tiêu hóa.",
-    status: "ACTIVE",
-  },
-  {
-    id: 6,
-    name: "Xét nghiệm lâm sàng",
-    description:
-      "Chuyên gia thực hiện và phân tích các xét nghiệm lâm sàng để hỗ trợ chẩn đoán bệnh.",
-    status: "ACTIVE",
-  },
-  {
-    id: 7,
-    name: "X-quang chẩn đoán",
-    description:
-      "Bác sĩ chuyên thực hiện các thủ thuật chụp X-quang để chẩn đoán các vấn đề về xương khớp và mô mềm.",
-    status: "INACTIVE",
-  },
-];
 
 export function SpecialtysManagement() {
-  const [specialties, setSpecialties] = useState<Specialty[]>(mockSpecialtys);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -144,64 +94,41 @@ export function SpecialtysManagement() {
   });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [totalPages, setTotalPages] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
+  const fetchSpecialties = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getSpecialties(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter
+      );
+      console.log("Fetched doctors:", data);
+
+      setSpecialties(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách chuyên môn:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
-  };
   useEffect(() => {
-    const fetchSpecialties = async () => {
-      try {
-        const data = await getSpecialties(
-          currentPage - 1,
-          itemsPerPage,
-          searchTerm,
-          statusFilter
-        );
-        console.log("Fetched doctors:", data);
-
-        setSpecialties(data.items || []);
-        setTotalPages(data.totalPages);
-        setTotalItems(data.totalItems);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách chuyên môn:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const handler = setTimeout(() => {
       fetchSpecialties();
     }, 500);
@@ -209,8 +136,13 @@ export function SpecialtysManagement() {
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
 
+  const handleRetry = () => {
+    fetchSpecialties();
+  };
+
   if (loading) return <SpecialtiesLoadingSkeleton />;
-  if (error) return <SpecialtiesErrorFallback />;
+  if (error)
+    return <SpecialtiesErrorFallback error={error} onRetry={handleRetry} />;
 
   const handleAddSpecialty = async () => {
     if (!newSpecialty.name || !newSpecialty.description) return;

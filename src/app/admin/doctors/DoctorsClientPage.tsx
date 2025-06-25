@@ -1,3 +1,4 @@
+"use client";
 import { DoctorsManagement } from "@/components/admin/doctors/doctors-management";
 
 export default function DoctorsClientPage() {

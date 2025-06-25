@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { achievementTypes, dayOfWeekOptions } from "./mockData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Achievement, Doctor } from "@/types";
@@ -38,6 +37,7 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { ImageUpload } from "@/components/image-upload";
 import { useCallback } from "react";
 import { useDoctorMetadata } from "@/hooks/doctor/use-doctor-metadata";
+import { achievementTypes, dayOfWeekOptions } from "./mockData";
 interface DoctorFormProps {
   editingDoctor: Doctor;
   setEditingDoctor: React.Dispatch<React.SetStateAction<Doctor | null>>;

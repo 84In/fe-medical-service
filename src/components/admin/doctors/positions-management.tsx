@@ -69,57 +69,10 @@ import {
   PositionsLoadingSkeleton,
 } from "./position-skeleton";
 import { toast } from "@/hooks/use-toast";
-
-// Mock data
-const mockPositions: Position[] = [
-  {
-    id: 1,
-    name: "Giám đốc",
-    description:
-      "Giám đốc bệnh viện, chịu trách nhiệm quản lý toàn bộ hoạt động của bệnh viện",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Phó giám đốc",
-    description:
-      "Phó giám đốc bệnh viện, hỗ trợ giám đốc trong công tác quản lý",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Bác sĩ chuyên khoa",
-    description: "Bác sĩ có chức vụ sâu trong một lĩnh vực y tế cụ thể",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "Trưởng khoa",
-    description: "Trưởng khoa chức vụ, quản lý hoạt động của khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "Phó trưởng khoa",
-    description: "Phó trưởng khoa, hỗ trợ trưởng khoa trong công tác quản lý",
-    status: "ACTIVE",
-  },
-  {
-    id: 6,
-    name: "Bác sĩ điều trị",
-    description: "Bác sĩ thực hiện công tác khám và điều trị bệnh nhân",
-    status: "ACTIVE",
-  },
-  {
-    id: 7,
-    name: "Bác sĩ nội trú",
-    description: "Bác sĩ mới tốt nghiệp, đang trong thời gian thực tập",
-    status: "INACTIVE",
-  },
-];
+import { getStatusColor, getStatusText } from "@/utils/status-css";
 
 export function PositionsManagement() {
-  const [positions, setPositions] = useState<Position[]>(mockPositions);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -135,73 +88,52 @@ export function PositionsManagement() {
   });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [totalPages, setTotalPages] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const fetchPositions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getPositions(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter
+      );
+      console.log("Fetched doctors:", data);
 
+      setPositions(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách chức vụ:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchPositions = async () => {
-      try {
-        const data = await getPositions(
-          currentPage - 1,
-          itemsPerPage,
-          searchTerm,
-          statusFilter
-        );
-        console.log("Fetched doctors:", data);
-
-        setPositions(data.items || []);
-        setTotalPages(data.totalPages);
-        setTotalItems(data.totalItems);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách chức vụ:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const handler = setTimeout(() => {
       fetchPositions();
     }, 500);
 
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
+
+  const handleRetry = () => {
+    fetchPositions();
+  };
   if (loading) return <PositionsLoadingSkeleton />;
-  if (error) return <PositionsErrorFallback />;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
-  };
+  if (error)
+    return <PositionsErrorFallback error={error} onRetry={handleRetry} />;
 
   const handleAddPosition = async () => {
     if (!newPosition.name || !newPosition.description) return;

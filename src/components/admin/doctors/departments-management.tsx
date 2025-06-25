@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
 import { addDepartment, getDepartments, updateDepartment } from "@/services";
 import type { Department } from "@/types/doctor";
 import {
@@ -69,36 +70,10 @@ import {
   DepartmentsErrorFallback,
   DepartmentsLoadingSkeleton,
 } from "./department-skeleton";
-import { Toast } from "@/components/ui/toast";
-import { toast } from "@/hooks/use-toast";
-
-// Mock data
-const mockDepartments: Department[] = [
-  {
-    id: 1,
-    name: "Tim mạch",
-    contentHtml: `<h2>Khoa Tim mạch - Chăm sóc tim mạch chuyên nghiệp</h2>
-<p>Khoa Tim mạch của VitaCare Medical là một trong những khoa hàng đầu về điều trị các bệnh lý tim mạch tại Việt Nam. Với đội ngũ bác sĩ giàu kinh nghiệm và trang thiết bị hiện đại, chúng tôi cam kết mang đến dịch vụ chăm sóc sức khỏe tim mạch tốt nhất.</p>`,
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "Nhi khoa",
-    contentHtml: `<h2>Khoa Nhi - Chăm sóc sức khỏe trẻ em toàn diện</h2>
-<p>Khoa Nhi của VitaCare Medical chuyên cung cấp dịch vụ chăm sóc sức khỏe cho trẻ em từ sơ sinh đến 16 tuổi. Với môi trường thân thiện, an toàn và đội ngũ y bác sĩ tận tâm, chúng tôi luôn đặt sức khỏe và sự thoải mái của các bé lên hàng đầu.</p>`,
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "Cấp cứu",
-    contentHtml: `<h2>Khoa Cấp cứu - Sẵn sàng 24/7</h2>
-<p>Khoa Cấp cứu của VitaCare Medical hoạt động 24/7, sẵn sàng tiếp nhận và xử lý các trường hợp cấp cứu, chấn thương và các tình huống y tế khẩn cấp.</p>`,
-    status: "ACTIVE",
-  },
-];
+import { getStatusColor, getStatusText } from "@/utils/status-css";
 
 export function DepartmentsManagement() {
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -111,7 +86,7 @@ export function DepartmentsManagement() {
     null
   );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [totalPages, setTotalPages] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   // Pagination state
@@ -124,60 +99,33 @@ export function DepartmentsManagement() {
     status: "ACTIVE",
   });
 
-  // Filter departments
+  const fetchDepartments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getDepartments(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter
+      );
+      console.log("Fetched doctors:", data);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200 hover:bg-green-800 hover:text-green-100";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-800 hover:text-yellow-100";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200 hover:bg-red-800 hover:text-red-100";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-800 hover:text-gray-100";
+      setDepartments(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách chuyên khoa:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
     }
   };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
-  };
-
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const data = await getDepartments(
-          currentPage - 1,
-          itemsPerPage,
-          searchTerm,
-          statusFilter
-        );
-        console.log("Fetched doctors:", data);
-
-        setDepartments(data.items || []);
-        setTotalPages(data.totalPages);
-        setTotalItems(data.totalItems);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách chuyên khoa:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const handler = setTimeout(() => {
       fetchDepartments();
     }, 500);
@@ -185,8 +133,13 @@ export function DepartmentsManagement() {
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
 
+  const handleRetry = () => {
+    fetchDepartments();
+  };
+
   if (loading) return <DepartmentsLoadingSkeleton />;
-  if (error) return <DepartmentsErrorFallback />;
+  if (error)
+    return <DepartmentsErrorFallback error={error} onRetry={handleRetry} />;
 
   const handleAddDepartment = async () => {
     if (!newDepartment.name || !newDepartment.contentHtml) return;
