@@ -50,85 +50,6 @@ interface NavItem {
   children?: NavItem[];
 }
 
-const navigationItems: NavItem[] = [
-  {
-    title: "Mô tả hệ thống quản trị",
-    icon: <Home className="h-5 w-5" />,
-    href: "/admin",
-  },
-  {
-    title: "Quản lý bác sĩ",
-    icon: <Users className="h-5 w-5" />,
-    href: "/admin/doctors",
-    children: [
-      {
-        title: "Tất cả bác sĩ",
-        icon: <Users className="h-4 w-4" />,
-        href: "/admin/doctors",
-      },
-      {
-        title: "Chuyên khoa",
-        icon: <Layers className="h-4 w-4" />,
-        href: "/admin/doctors/departments",
-      },
-      {
-        title: "Chuyên môn",
-        icon: <Stethoscope className="h-4 w-4" />,
-        href: "/admin/doctors/specialties",
-      },
-      {
-        title: "Chức vụ",
-        icon: <Building2 className="h-4 w-4" />,
-        href: "/admin/doctors/positions",
-      },
-      {
-        title: "Chức danh",
-        icon: <UserCheck className="h-4 w-4" />,
-        href: "/admin/doctors/titles",
-      },
-    ],
-  },
-  {
-    title: "Quản lý dịch vụ",
-    icon: <Hospital className="h-5 w-5" />,
-    href: "/admin/services",
-    children: [
-      {
-        title: "Tất cả dịch vụ",
-        icon: <ClipboardList className="h-4 w-4" />,
-        href: "/admin/services",
-      },
-      {
-        title: "Loại dịch vụ",
-        icon: <Activity className="h-4 w-4" />,
-        href: "/admin/services/service-types",
-      },
-    ],
-  },
-  {
-    title: "Quản lý tin tức",
-    icon: <FileText className="h-5 w-5" />,
-    href: "/admin/news",
-    children: [
-      {
-        title: "Tất cả tin tức",
-        icon: <Newspaper className="h-4 w-4" />,
-        href: "/admin/news",
-      },
-      {
-        title: "Danh mục tin tức",
-        icon: <FileType2 className="h-4 w-4" />,
-        href: "/admin/news/news-types",
-      },
-    ],
-  },
-  {
-    title: "Nhân viên",
-    icon: <UserCheck className="h-5 w-5" />,
-    href: "/admin/staff",
-  },
-];
-
 export function MedicalAdminNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["Dashboard"]);
@@ -136,6 +57,91 @@ export function MedicalAdminNav() {
   const pathname = usePathname();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  const role = useAuthStore((state) => state.user?.role.name);
+
+  const navigationItems: NavItem[] = [
+    {
+      title: "Mô tả hệ thống quản trị",
+      icon: <Home className="h-5 w-5" />,
+      href: "/admin",
+    },
+    {
+      title: "Quản lý bác sĩ",
+      icon: <Users className="h-5 w-5" />,
+      href: "/admin/doctors",
+      children: [
+        {
+          title: "Tất cả bác sĩ",
+          icon: <Users className="h-4 w-4" />,
+          href: "/admin/doctors",
+        },
+        {
+          title: "Chuyên khoa",
+          icon: <Layers className="h-4 w-4" />,
+          href: "/admin/doctors/departments",
+        },
+        {
+          title: "Chuyên môn",
+          icon: <Stethoscope className="h-4 w-4" />,
+          href: "/admin/doctors/specialties",
+        },
+        {
+          title: "Chức vụ",
+          icon: <Building2 className="h-4 w-4" />,
+          href: "/admin/doctors/positions",
+        },
+        {
+          title: "Chức danh",
+          icon: <UserCheck className="h-4 w-4" />,
+          href: "/admin/doctors/titles",
+        },
+      ],
+    },
+    {
+      title: "Quản lý dịch vụ",
+      icon: <Hospital className="h-5 w-5" />,
+      href: "/admin/services",
+      children: [
+        {
+          title: "Tất cả dịch vụ",
+          icon: <ClipboardList className="h-4 w-4" />,
+          href: "/admin/services",
+        },
+        {
+          title: "Loại dịch vụ",
+          icon: <Activity className="h-4 w-4" />,
+          href: "/admin/services/service-types",
+        },
+      ],
+    },
+    {
+      title: "Quản lý tin tức",
+      icon: <FileText className="h-5 w-5" />,
+      href: "/admin/news",
+      children: [
+        {
+          title: "Tất cả tin tức",
+          icon: <Newspaper className="h-4 w-4" />,
+          href: "/admin/news",
+        },
+        {
+          title: "Danh mục tin tức",
+          icon: <FileType2 className="h-4 w-4" />,
+          href: "/admin/news/news-types",
+        },
+      ],
+    },
+
+    ...(role === "ADMIN"
+      ? [
+          {
+            title: "Nhân viên",
+            icon: <UserCheck className="h-5 w-5" />,
+            href: "/admin/staff",
+          },
+        ]
+      : []),
+  ];
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) =>

@@ -19,8 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDoctorMetadata } from "@/hooks/doctor/use-doctor-metadata";
-import { addDoctor, getDoctors, updateDoctor } from "@/services";
+import { toast } from "@/hooks/use-toast";
+import { getDoctors, updateDoctor } from "@/services";
 import type { Doctor, WorkingHour } from "@/types/doctor";
+import { getStatusColor } from "@/utils/status-css";
 import {
   Award,
   Calendar,
@@ -46,8 +48,6 @@ import {
 } from "./doctors-skeleton";
 import { EditDoctorForm } from "./edit-doctor";
 import DoctorForm from "./new-doctor";
-import { toast } from "@/hooks/use-toast";
-import { getStatusColor } from "@/utils/status-css";
 
 const dayOfWeekOptions = [
   { value: "MONDAY", label: "Thứ 2" },
@@ -68,7 +68,7 @@ export function DoctorsManagement() {
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
   const { departments } = useDoctorMetadata();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -98,38 +98,46 @@ export function DoctorsManagement() {
       isAvailable: day.value !== "SUNDAY",
     })),
   });
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getDoctors(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter,
+        departmentFilter !== "ALL" ? +departmentFilter : undefined
+      );
+      console.log("Fetched doctors:", data);
 
+      setDoctors(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách bác sĩ:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const data = await getDoctors(
-          currentPage - 1,
-          itemsPerPage,
-          searchTerm,
-          statusFilter,
-          departmentFilter !== "ALL" ? +departmentFilter : undefined
-        );
-        console.log("Fetched doctors:", data);
-
-        setDoctors(data.items || []);
-        setTotalPages(data.totalPages);
-        setTotalItems(data.totalItems);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách bác sĩ:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
     const handler = setTimeout(() => {
       fetchDoctors();
     }, 500);
 
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, statusFilter, departmentFilter]);
-
+  const handleRetry = () => {
+    fetchDoctors();
+  };
   if (loading) return <DoctorsLoadingSkeleton />;
-  if (error) return <DoctorsErrorFallback />;
+  if (error)
+    return <DoctorsErrorFallback error={error} onRetry={handleRetry} />;
 
   // Change page
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);

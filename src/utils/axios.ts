@@ -39,25 +39,36 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (typeof window !== "undefined") {
-      // chỉ gọi toast hoặc redirect khi đang ở client
-      if (error.response) {
-        const status = error.response.status;
+      const errorData = error.response?.data as any;
 
-        if (status === 401) {
-          useAuthStore.getState().logout();
-          window.location.href = "/login";
-        }
+      // Lấy thông tin lỗi từ response
+      const code = errorData?.code ?? error.response?.status ?? -1;
+      const message =
+        errorData?.message ??
+        (error.response
+          ? "Có lỗi xảy ra, vui lòng thử lại sau."
+          : "Không thể kết nối tới máy chủ.");
+      const result = errorData?.result ?? null;
 
-        toast.error(
-          (error.response.data as any)?.message ??
-            "Có lỗi xảy ra, vui lòng thử lại sau."
-        );
+      // ✅ Hiển thị toast nếu cần
+      if (code === 401) {
+        useAuthStore.getState().logout();
+        toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+        window.location.href = "/login";
       } else {
-        toast.error("Không thể kết nối tới máy chủ.");
+        toast.error(message);
       }
+
+      // ✅ Trả về một lỗi chuẩn theo định dạng backend
+      return Promise.reject({ code, message, result });
     }
 
-    return Promise.reject(error);
+    // Trường hợp không có window (SSR), vẫn reject theo dạng chuẩn
+    return Promise.reject({
+      code: error.response?.status ?? -1,
+      message: "Đã có lỗi xảy ra.",
+      result: null,
+    });
   }
 );
 
