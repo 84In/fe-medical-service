@@ -3,7 +3,7 @@ export interface Role {
   name: string;
 }
 
-export interface Staff {
+export interface User {
   id: number;
   username: string;
   password?: string;
@@ -14,7 +14,7 @@ export interface Staff {
   updatedAt?: string;
 }
 
-export interface CreateStaffRequest {
+export interface CreateUserRequest {
   username: string;
   password: string;
   phone: string;
@@ -22,7 +22,7 @@ export interface CreateStaffRequest {
   roleId: number;
 }
 
-export interface UpdateStaffRequest {
+export interface UpdateUserRequest {
   username: string;
   password?: string;
   phone: string;

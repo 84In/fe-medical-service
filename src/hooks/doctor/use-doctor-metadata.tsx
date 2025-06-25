@@ -32,16 +32,16 @@ export function useDoctorMetadata() {
       setTitles(titleRes || []);
       setSpecialties(speRes || []);
     } catch (err: any) {
-      toast({
-        title: "Lỗi tải dữ liệu",
-        description: "Không thể tải metadata",
-        variant: "destructive",
-        action: (
-          <ToastAction altText="Thử lại" onClick={fetchMeta}>
-            Thử lại
-          </ToastAction>
-        ),
-      });
+      // toast({
+      //   title: "Lỗi tải dữ liệu",
+      //   description: "Không thể tải metadata",
+      //   variant: "destructive",
+      //   action: (
+      //     <ToastAction altText="Thử lại" onClick={fetchMeta}>
+      //       Thử lại
+      //     </ToastAction>
+      //   ),
+      // });
 
       console.error("Fetch metadata error:", err);
     } finally {

@@ -65,64 +65,10 @@ import type { Title } from "@/types/doctor";
 import { addTitle, getTitles, updateTitle } from "@/services/title.service";
 import { TitlesErrorFallback, TitlesLoadingSkeleton } from "./titles-skeleton";
 import { toast } from "@/hooks/use-toast";
-
-// Mock data
-const mockTitles: Title[] = [
-  {
-    id: 1,
-    name: "BS.",
-    description: "Bác sĩ - Người có bằng tốt nghiệp đại học y khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    name: "ThS.BS.",
-    description: "Thạc sĩ Bác sĩ - Bác sĩ có bằng thạc sĩ y khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    name: "TS.BS.",
-    description: "Tiến sĩ Bác sĩ - Bác sĩ có bằng tiến sĩ y khoa",
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    name: "PGS.TS.",
-    description: "Phó Giáo sư Tiến sĩ - Chức danh khoa học cao cấp",
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    name: "GS.TS.",
-    description: "Giáo sư Tiến sĩ - Chức danh khoa học cao nhất",
-    status: "ACTIVE",
-  },
-  {
-    id: 6,
-    name: "BSCK I",
-    description:
-      "Bác sĩ Chuyên khoa cấp I - Bác sĩ có chứng chỉ chuyên khoa cấp I",
-    status: "ACTIVE",
-  },
-  {
-    id: 7,
-    name: "BSCK II",
-    description:
-      "Bác sĩ Chuyên khoa cấp II - Bác sĩ có chứng chỉ chuyên khoa cấp II",
-    status: "ACTIVE",
-  },
-  {
-    id: 8,
-    name: "BSNT",
-    description:
-      "Bác sĩ Nội trú - Bác sĩ đang trong thời gian đào tạo chuyên khoa",
-    status: "INACTIVE",
-  },
-];
+import { getStatusColor, getStatusText } from "@/utils/status-css";
 
 export function TitlesManagement() {
-  const [titles, setTitles] = useState<Title[]>(mockTitles);
+  const [titles, setTitles] = useState<Title[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -136,65 +82,39 @@ export function TitlesManagement() {
   });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [totalPages, setTotalPages] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const fetchTitles = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getTitles(
+        currentPage - 1,
+        itemsPerPage,
+        searchTerm,
+        statusFilter
+      );
+      console.log("Fetched titles:", data);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "INACTIVE":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "HIDDEN":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      case "DELETED":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+      setTitles(data.items || []);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách chức danh:", error);
+      setError(
+        error instanceof Error
+          ? error
+          : new Error("Đã xảy ra lỗi không xác định")
+      );
+    } finally {
+      setLoading(false);
     }
   };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động";
-      case "INACTIVE":
-        return "Ngừng hoạt động";
-      case "HIDDEN":
-        return "Ẩn";
-      case "DELETED":
-        return "Đã xóa";
-      default:
-        return status;
-    }
-  };
-
   useEffect(() => {
-    const fetchTitles = async () => {
-      try {
-        const data = await getTitles(
-          currentPage - 1,
-          itemsPerPage,
-          searchTerm,
-          statusFilter
-        );
-        console.log("Fetched titles:", data);
-
-        setTitles(data.items || []);
-        setTotalPages(data.totalPages);
-        setTotalItems(data.totalItems);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách chức danh:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const handler = setTimeout(() => {
       fetchTitles();
     }, 500);
@@ -202,8 +122,12 @@ export function TitlesManagement() {
     return () => clearTimeout(handler);
   }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
 
+  const handleRetry = () => {
+    fetchTitles();
+  };
+
   if (loading) return <TitlesLoadingSkeleton />;
-  if (error) return <TitlesErrorFallback />;
+  if (error) return <TitlesErrorFallback error={error} onRetry={handleRetry} />;
 
   const handleAddTitle = async () => {
     if (!newTitle.name || !newTitle.description) return;

@@ -8,7 +8,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (req.nextUrl.pathname.startsWith("/admin") && role !== "ADMIN") {
+  if (req.nextUrl.pathname.startsWith("/admin") && !role) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
