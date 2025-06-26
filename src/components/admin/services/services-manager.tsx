@@ -663,7 +663,11 @@ export default function ServicesManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <ServicesError type="not-found" onRetry={handleRetry} />
+        <ServicesError
+          creatNew={() => setIsAddDialogOpen(true)}
+          type="not-found"
+          onRetry={handleRetry}
+        />
       </>
     );
   }
