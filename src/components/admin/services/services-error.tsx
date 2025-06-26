@@ -12,16 +12,19 @@ import {
   Building2,
   FileText,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 interface ServicesErrorProps {
   error?: Error | null;
+  creatNew?: () => void;
   onRetry?: () => void;
   type?: "network" | "not-found" | "general";
 }
 
 export function ServicesError({
   error,
+  creatNew,
   onRetry,
   type = "general",
 }: ServicesErrorProps) {
@@ -130,7 +133,7 @@ export function ServicesError({
             )}
 
             {type === "not-found" && (
-              <Button variant="outline">
+              <Button onClick={creatNew} variant="outline">
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm dịch vụ đầu tiên
               </Button>
@@ -159,14 +162,20 @@ export function ServicesError({
           {/* Additional Actions for Empty State */}
           {type === "not-found" && (
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-md">
-              <div className="text-center p-4 bg-white rounded-lg border">
+              <Link
+                href={"/admin/services/service-types"}
+                className="text-center p-4 bg-white rounded-lg border hover:cursor-pointer"
+              >
                 <Building2 className="h-8 w-8 text-blue-600 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-900">
                   Quản lý loại dịch vụ
                 </p>
                 <p className="text-xs text-gray-600">Tạo loại dịch vụ trước</p>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border">
+              </Link>
+              <div
+                onClick={creatNew}
+                className="text-center p-4 bg-white rounded-lg border hover:cursor-pointer"
+              >
                 <Plus className="h-8 w-8 text-green-600 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-900">
                   Thêm dịch vụ
@@ -179,6 +188,7 @@ export function ServicesError({
                   Import dữ liệu
                 </p>
                 <p className="text-xs text-gray-600">Nhập từ file Excel</p>
+                <span>Đang phát triên!</span>
               </div>
             </div>
           )}
