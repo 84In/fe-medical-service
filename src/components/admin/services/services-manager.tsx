@@ -480,20 +480,9 @@ export default function ServicesManagement() {
 
   // Show not found if no data
   if (services.length === 0) {
-    return <ServicesError type="not-found" onRetry={handleRetry} />;
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý dịch vụ</h1>
-          <p className="text-gray-600 mt-1">
-            Quản lý thông tin dịch vụ y tế, thêm sửa xóa các dịch vụ trong hệ
-            thống.
-          </p>
-        </div>
+    return (
+      <>
+        {" "}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
@@ -674,6 +663,22 @@ export default function ServicesManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <ServicesError type="not-found" onRetry={handleRetry} />
+      </>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý dịch vụ</h1>
+          <p className="text-gray-600 mt-1">
+            Quản lý thông tin dịch vụ y tế, thêm sửa xóa các dịch vụ trong hệ
+            thống.
+          </p>
+        </div>
       </div>
 
       {/* Filters */}

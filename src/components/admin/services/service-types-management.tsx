@@ -294,11 +294,89 @@ export default function ServiceTypesManagement() {
   // Show not found if no data
   if (serviceTypes.length === 0) {
     return (
-      <ServiceTypesError
-        type="not-found"
-        createNew={() => setIsAddDialogOpen(true)}
-        onRetry={handleRetry}
-      />
+      <>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm loại dịch vụ
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Thêm loại dịch vụ mới</DialogTitle>
+              <DialogDescription>
+                Tạo loại dịch vụ mới để phân loại các dịch vụ y tế.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Tên loại dịch vụ *</Label>
+                <Input
+                  id="name"
+                  value={newServiceType.name || ""}
+                  onChange={(e) =>
+                    setNewServiceType({
+                      ...newServiceType,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="Ví dụ: Khám tổng quát, Tầm soát ung thư, v.v."
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Mô tả *</Label>
+                <Textarea
+                  id="description"
+                  value={newServiceType.description || ""}
+                  onChange={(e) =>
+                    setNewServiceType({
+                      ...newServiceType,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Mô tả chi tiết về loại dịch vụ này..."
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Trạng thái</Label>
+                <Select
+                  value={newServiceType.status}
+                  onValueChange={(value) =>
+                    setNewServiceType({
+                      ...newServiceType,
+                      status: value as ServiceType["status"],
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                    <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
+                    <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleAddServiceType}
+                disabled={!newServiceType.name || !newServiceType.description}
+              >
+                Thêm loại dịch vụ
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <ServiceTypesError
+          type="not-found"
+          createNew={() => setIsAddDialogOpen(true)}
+          onRetry={handleRetry}
+        />
+      </>
     );
   }
 
