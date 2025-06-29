@@ -1,21 +1,25 @@
+"use client";
 import { Calendar, FileText } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import Link from "next/link";
 import { fetchNews } from "@/services/news.service";
 import { formatDMYDate } from "@/utils/format-utils";
+import { useEffect, useState } from "react";
+import { News } from "@/types";
 
-const fetchLimitNews = async () => {
-  try {
-    const data = await fetchNews(0, 6, "", "ACTIVE", 0);
-    return data.items || [];
-  } catch (error) {
-    console.error("Lỗi khi tải danh sách tin tức:", error as Error);
-    return [];
-  }
-};
-
-export async function NewsHero() {
-  const news = await fetchLimitNews();
+export function NewsHero() {
+  const [news, setNews] = useState<News[]>([]);
+  const fetchLimitNews = async () => {
+    try {
+      const data = await fetchNews(0, 6, "", "ACTIVE", 0);
+      setNews(data.items || []);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách tin tức:", error as Error);
+    }
+  };
+  useEffect(() => {
+    fetchLimitNews();
+  }, []);
   return (
     <div className="h-full">
       <div className="mb-8">
