@@ -1,8 +1,9 @@
+"use client";
+import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -10,23 +11,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { CONTACT_INFO } from "@/constants/information";
+import { toast } from "@/hooks/use-toast";
 import {
-  MapPin,
-  Phone,
-  Mail,
   Clock,
-  MessageCircle,
-  Send,
   Facebook,
-  Youtube,
   Instagram,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Send,
+  Youtube,
   Zap,
 } from "lucide-react";
-import Image from "next/image";
-import Header from "@/components/layout/header";
-import MainLayout from "@/components/layout/main-layout";
+import { useRef, useState } from "react";
 
 export default function ContactPage() {
+  const [mapError, setMapError] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const res = await fetch(
+        "https://formsubmit.co/ajax/vuonglekhaaist@gmail.com",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success === "true") {
+        toast({
+          title: "🎉 Cảm ơn bạn! Tin nhắn đã được gửi.",
+          variant: "success",
+        });
+        formRef.current?.reset();
+      } else {
+        toast({
+          title: "Gửi thất bại! " + data.message,
+          variant: "warning",
+        });
+      }
+    } catch {
+      toast({
+        title: "Đã xảy ra lỗi kết nối.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <MainLayout>
       {/* Hero Section */}
@@ -56,7 +100,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">HOTLINE 24/7</h3>
                 <p className="text-2xl font-bold text-red-600 mb-1">
-                  1900 6923
+                  {CONTACT_INFO.phone}
                 </p>
                 <p className="text-sm text-gray-600">Tư vấn miễn phí</p>
               </CardContent>
@@ -69,11 +113,7 @@ export default function ContactPage() {
                   <MapPin className="h-8 w-8 text-blue-600" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">ĐỊA CHỈ</h3>
-                <p className="text-gray-700 text-sm">
-                  215 Nguyễn Văn Cừ
-                  <br />
-                  Quận 5, TP. Hồ Chí Minh
-                </p>
+                <p className="text-gray-700 text-sm">{CONTACT_INFO.location}</p>
               </CardContent>
             </Card>
 
@@ -85,9 +125,9 @@ export default function ContactPage() {
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">EMAIL</h3>
                 <p className="text-gray-700 text-sm">
-                  info@vitacaremedical.vn
+                  {CONTACT_INFO.email}
                   <br />
-                  support@vitacaremedical.vn
+                  {CONTACT_INFO.emailSupport}
                 </p>
               </CardContent>
             </Card>
@@ -100,9 +140,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">GIỜ LÀM VIỆC</h3>
                 <p className="text-gray-700 text-sm">
-                  T2-T6: 7:00 - 17:00
-                  <br />
-                  T7-CN: 8:00 - 16:00
+                  {CONTACT_INFO.workingHours}
                 </p>
               </CardContent>
             </Card>
@@ -127,93 +165,114 @@ export default function ContactPage() {
                     với bạn trong thời gian sớm nhất.
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">Họ *</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="Nhập họ của bạn"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Tên *</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="Nhập tên của bạn"
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Số điện thoại *</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="0123 456 789"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="email@example.com"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Chủ đề</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn chủ đề cần tư vấn" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">Tư vấn chung</SelectItem>
-                        <SelectItem value="appointment">
-                          Đặt lịch khám
-                        </SelectItem>
-                        <SelectItem value="services">Dịch vụ y tế</SelectItem>
-                        <SelectItem value="insurance">Bảo hiểm y tế</SelectItem>
-                        <SelectItem value="emergency">Cấp cứu</SelectItem>
-                        <SelectItem value="complaint">Khiếu nại</SelectItem>
-                        <SelectItem value="other">Khác</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Tin nhắn *</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="Nhập nội dung tin nhắn của bạn..."
-                      className="min-h-[120px]"
-                      required
+                <form ref={formRef} onSubmit={handleSubmit}>
+                  <CardContent className="space-y-6">
+                    {/* Hidden config */}
+                    <input type="hidden" name="_captcha" value="false" />
+                    <input
+                      type="hidden"
+                      name="_next"
+                      value="https://yourdomain.com/thank-you"
                     />
-                  </div>
 
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    <Send className="h-4 w-4 mr-2" />
-                    Gửi tin nhắn
-                  </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">Họ *</Label>
+                        <Input
+                          id="firstName"
+                          name="firstName"
+                          placeholder="Nhập họ của bạn"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Tên *</Label>
+                        <Input
+                          id="lastName"
+                          name="lastName"
+                          placeholder="Nhập tên của bạn"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                  <p className="text-xs text-gray-500 text-center">
-                    Bằng cách gửi form này, bạn đồng ý với{" "}
-                    <a
-                      href="/chinh-sach-bao-mat"
-                      className="text-blue-600 hover:underline"
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Số điện thoại *</Label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          placeholder="0123 456 789"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="email@example.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="subject">Chủ đề</Label>
+                      <Select name="subject" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn chủ đề cần tư vấn" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">Tư vấn chung</SelectItem>
+                          <SelectItem value="appointment">
+                            Đặt lịch khám
+                          </SelectItem>
+                          <SelectItem value="services">Dịch vụ y tế</SelectItem>
+                          <SelectItem value="insurance">
+                            Bảo hiểm y tế
+                          </SelectItem>
+                          <SelectItem value="emergency">Cấp cứu</SelectItem>
+                          <SelectItem value="complaint">Khiếu nại</SelectItem>
+                          <SelectItem value="other">Khác</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Tin nhắn *</Label>
+                      <Textarea
+                        id="message"
+                        name="message"
+                        placeholder="Nhập nội dung tin nhắn của bạn..."
+                        className="min-h-[120px]"
+                        required
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      chính sách bảo mật
-                    </a>{" "}
-                    của chúng tôi.
-                  </p>
-                </CardContent>
+                      <Send className="h-4 w-4 mr-2" />
+                      Gửi tin nhắn
+                    </Button>
+
+                    <p className="text-xs text-gray-500 text-center">
+                      Bằng cách gửi form này, bạn đồng ý với{" "}
+                      <a
+                        href="/chinh-sach-bao-mat"
+                        className="text-blue-600 hover:underline"
+                      >
+                        chính sách bảo mật
+                      </a>{" "}
+                      của chúng tôi.
+                    </p>
+                  </CardContent>
+                </form>
               </Card>
             </div>
 
@@ -228,23 +287,30 @@ export default function ContactPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="relative h-64 bg-gray-200 rounded-b-lg overflow-hidden">
-                    <Image
-                      src="/placeholder.svg?height=256&width=500"
-                      alt="Bản đồ VitaCare Medical"
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
-                      <div className="bg-white p-4 rounded-lg shadow-lg text-center">
-                        <MapPin className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                        <p className="font-semibold text-gray-900">
-                          VitaCare Medical
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          215 Nguyễn Văn Cừ, Q.5
-                        </p>
+                    {!mapError ? (
+                      <iframe
+                        src={CONTACT_INFO.googleIframe}
+                        width="100%"
+                        height="100%"
+                        loading="lazy"
+                        allowFullScreen
+                        title="Vị trí của VitaCare Medical trên bản đồ"
+                        onError={() => setMapError(true)}
+                        className="absolute inset-0 w-full h-full z-0"
+                      ></iframe>
+                    ) : (
+                      <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                        <div className="bg-white p-4 rounded-lg shadow-lg text-center">
+                          <MapPin className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                          <p className="font-semibold text-gray-900">
+                            VitaCare Medical
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {CONTACT_INFO.location}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -277,7 +343,7 @@ export default function ContactPage() {
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-red-600" />
                           <span className="font-bold text-red-600 text-lg">
-                            1900 6923
+                            {CONTACT_INFO.quickContactPhone}
                           </span>
                           <span className="text-gray-600">
                             (Hotline VitaCare)
@@ -303,21 +369,27 @@ export default function ContactPage() {
                       size="icon"
                       className="hover:bg-blue-50 hover:border-blue-300"
                     >
-                      <Facebook className="h-5 w-5 text-blue-600" />
+                      <a href={CONTACT_INFO.facebook}>
+                        <Facebook className="h-5 w-5 text-blue-600" />
+                      </a>
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
                       className="hover:bg-red-50 hover:border-red-300"
                     >
-                      <Youtube className="h-5 w-5 text-red-600" />
+                      <a href={CONTACT_INFO.youtube}>
+                        <Youtube className="h-5 w-5 text-red-600" />
+                      </a>
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
                       className="hover:bg-pink-50 hover:border-pink-300"
                     >
-                      <Instagram className="h-5 w-5 text-pink-600" />
+                      <a href={CONTACT_INFO.instagram}>
+                        <Instagram className="h-5 w-5 text-pink-600" />
+                      </a>
                     </Button>
                   </div>
                   <p className="text-sm text-gray-600 mt-4">
