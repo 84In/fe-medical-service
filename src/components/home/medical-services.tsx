@@ -6,19 +6,22 @@ import { Avatar } from "@radix-ui/react-avatar";
 import { Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { AvatarFallback } from "../ui/avatar";
+import { useEffect, useState } from "react";
+import { ServiceType } from "@/types";
 
-const fetchLimitServiceTypes = async () => {
-  try {
-    const data = await fetchServiceTypes(0, 6, "", "ACTIVE");
-    return data.items || [];
-  } catch (error) {
-    console.error("Lỗi khi tải danh sách dịch vụ:", error as Error);
-    return [];
-  }
-};
-
-export async function MedicalServices() {
-  const services = await fetchLimitServiceTypes();
+export function MedicalServices() {
+  const [services, setServices] = useState<ServiceType[]>([]);
+  const fetchLimitServiceTypes = async () => {
+    try {
+      const data = await fetchServiceTypes(0, 6, "", "ACTIVE");
+      setServices(data.items || []);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách dịch vụ:", error as Error);
+    }
+  };
+  useEffect(() => {
+    fetchLimitServiceTypes();
+  }, []);
   return (
     <div className="h-full">
       <div className="mb-8">
