@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/button";
+import { CONTACT_INFO } from "@/constants/information";
 
 export default function Footer() {
   return (
@@ -43,26 +44,35 @@ export default function Footer() {
               <div className="space-y-2 text-blue-200 text-sm">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  <span>1900 6923</span>
+                  <span>{CONTACT_INFO.quickContactPhone}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <a
+                  href={`mailto:${CONTACT_INFO.email}`}
+                  className="flex items-center gap-2"
+                >
                   <Mail className="h-4 w-4" />
-                  <span>info@vitacaremedical.vn</span>
-                </div>
-                <div className="flex items-center gap-2">
+                  <span>{CONTACT_INFO.email}</span>
+                </a>
+                <a
+                  href={`https://www.google.com/maps?q=${encodeURIComponent(
+                    CONTACT_INFO.googleMap
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 "
+                >
                   <MapPin className="h-4 w-4" />
-                  <span>215 Nguyễn Văn Cừ, Q.5, TP.HCM</span>
-                </div>
+                  <span>{CONTACT_INFO.location}</span>
+                </a>
               </div>
             </div>
 
             <div>
               <h4 className="font-bold mb-4">GIỜ LÀM VIỆC</h4>
               <div className="space-y-2 text-blue-200 text-sm">
-                <div>Thứ 2 - Thứ 6: 7:00 - 17:00</div>
-                <div>Thứ 7 - Chủ nhật: 8:00 - 16:00</div>
+                <div>{CONTACT_INFO.workingHours}</div>
                 <div className="text-yellow-300 font-semibold">
-                  Hotline 24/7: 1900 6923
+                  Hotline 24/7: {CONTACT_INFO.phone}
                 </div>
               </div>
             </div>
@@ -75,21 +85,27 @@ export default function Footer() {
                   size="icon"
                   className="bg-white/10 border-white/20 hover:bg-white/20"
                 >
-                  <Facebook className="h-4 w-4" />
+                  <a href={CONTACT_INFO.facebook}>
+                    <Facebook className="h-4 w-4" />
+                  </a>
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   className="bg-white/10 border-white/20 hover:bg-white/20"
                 >
-                  <Youtube className="h-4 w-4" />
+                  <a href={CONTACT_INFO.youtube}>
+                    <Youtube className="h-4 w-4" />
+                  </a>
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   className="bg-white/10 border-white/20 hover:bg-white/20"
                 >
-                  <Instagram className="h-4 w-4" />
+                  <a href={CONTACT_INFO.instagram}>
+                    <Instagram className="h-4 w-4" />
+                  </a>
                 </Button>
               </div>
               <p className="text-blue-200 text-sm">
@@ -100,7 +116,7 @@ export default function Footer() {
 
           <div className="border-t border-blue-700 mt-8 pt-8 text-center">
             <p className="text-blue-200 text-sm">
-              © 2024 VitaCare Medical. Phát triển bởi VASD IT Team.
+              © 2025 VitaCare Medical. Phát triển bởi VASD IT Team.
             </p>
           </div>
         </div>

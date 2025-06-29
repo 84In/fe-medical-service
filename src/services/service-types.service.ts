@@ -80,3 +80,46 @@ export const getserviceTypeByIdServer = async (
     return null;
   }
 };
+
+export const fetchServiceTypes = async (
+  page = 0,
+  size = 10,
+  keyword?: string,
+  status?: string
+): Promise<PaginatedResponse<ServiceType>> => {
+  const params = new URLSearchParams();
+
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+
+  if (keyword && keyword.trim()) {
+    params.append("keyword", keyword.trim());
+  }
+
+  if (status && status !== "ALL") {
+    params.append("status", status);
+  }
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api/v1";
+
+  const res = await fetch(
+    `${baseUrl}/service-types/search?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // hoặc "force-cache", tùy nhu cầu
+    }
+  );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("Lỗi khi gọi API:", errorText);
+    throw new Error("Không thể tải danh sách dịch vụ.");
+  }
+
+  const data: ApiResponse<PaginatedResponse<ServiceType>> = await res.json();
+  return data.result;
+};

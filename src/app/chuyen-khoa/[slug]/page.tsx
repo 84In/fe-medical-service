@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CONTACT_INFO } from "@/constants/information";
 import { getDepartmentByIdServer } from "@/services";
 import type { Department } from "@/types";
 import {
@@ -17,12 +18,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-const CONTACT_INFO = {
-  phone: "1900-1234",
-  location: "VitaCare Medical, số 1 ABC, Q.1, TP.HCM",
-  workingHours: "Từ thứ 2 đến Chủ nhật (24/7)",
-};
 
 // Function to parse slug and get department
 const getDepartmentFromSlug = async (
