@@ -683,6 +683,186 @@ export default function ServicesManagement() {
             thống.
           </p>
         </div>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm dịch vụ
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Thêm dịch vụ mới</DialogTitle>
+              <DialogDescription>
+                Tạo dịch vụ mới với editor trực quan. Chọn mẫu có sẵn để bắt đầu
+                nhanh!
+              </DialogDescription>
+            </DialogHeader>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+                <TabsTrigger value="content">Nội dung mô tả</TabsTrigger>
+              </TabsList>
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Tên dịch vụ *</Label>
+                    <Input
+                      id="name"
+                      value={newService.name || ""}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        setNewService({
+                          ...newService,
+                          name,
+                          slug: generateSlug(name),
+                        });
+                      }}
+                      placeholder="Ví dụ: Khám sức khỏe tổng quát, Tầm soát ung thư, v.v."
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="slug">Đường dẫn rút gọn *</Label>
+                    <Input
+                      id="slug"
+                      value={newService.slug || ""}
+                      onChange={(e) =>
+                        setNewService({
+                          ...newService,
+                          slug: e.target.value,
+                        })
+                      }
+                      placeholder="Ví dụ: kham-suc-khoe-tong-quat, tam-soat-ung-thu, v.v."
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="serviceType">Loại dịch vụ *</Label>
+                    <Select
+                      disabled={loadingMeta}
+                      value={newService.serviceType?.id.toString()}
+                      onValueChange={(value) => {
+                        const serviceType = serviceTypes.find(
+                          (st) => st.id.toString() === value
+                        );
+                        setNewService({ ...newService, serviceType });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            loadingMeta
+                              ? "Đang tải dữ liệu ..."
+                              : "Chọn loại dịch vụ"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serviceTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="descriptionShort">Mô tả ngắn</Label>
+                    <Input
+                      id="descriptionShort"
+                      value={newService.descriptionShort || ""}
+                      onChange={(e) =>
+                        setNewService({
+                          ...newService,
+                          descriptionShort: e.target.value,
+                        })
+                      }
+                      placeholder="Mô tả ngắn gọn về dịch vụ (tối đa 120 ký tự)"
+                      maxLength={120}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="thumbnail">Ảnh thu nhỏ</Label>
+                    <ImageUpload
+                      initialImage={newService.thumbnailUrl}
+                      onImageSelect={addImage}
+                      folder={"services"}
+                      maxSize={5}
+                    />
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
+                        <div className="text-xs text-blue-800">
+                          <p className="font-medium mb-1">Hướng dẫn sử dụng:</p>
+                          <ul className="space-y-1">
+                            <li>
+                              • <strong>Hình ảnh</strong> cần căn chỉnh kích
+                              thước trước khi tải lên (hình ảnh tải lên sẽ giữ
+                              nguyên kích thước)
+                            </li>
+                            <li>
+                              • <strong>Ảnh thu nhỏ</strong> nên có kích thước
+                              dưới 5MB
+                            </li>
+                            <li>
+                              • <strong>Định dạng</strong> hỗ trợ: JPG, PNG, GIF
+                              (không hỗ trợ ảnh động)
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="status">Trạng thái</Label>
+                    <Select
+                      value={newService.status}
+                      onValueChange={(value) =>
+                        setNewService({
+                          ...newService,
+                          status: value as Service["status"],
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                        <SelectItem value="INACTIVE">
+                          Ngừng hoạt động
+                        </SelectItem>
+                        <SelectItem value="HIDDEN">Ẩn</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="content" className="space-y-4">
+                <TiptapEditor
+                  value={newService.contentHtml || ""}
+                  onChange={(content) =>
+                    setNewService({ ...newService, contentHtml: content })
+                  }
+                  height={400}
+                  placeholder="Bắt đầu viết mô tả về dịch vụ..."
+                  templateCategories={["Dịch vụ"]}
+                />
+              </TabsContent>
+            </Tabs>
+            <DialogFooter>
+              <Button
+                onClick={handleAddService}
+                disabled={
+                  !newService.name ||
+                  !newService.contentHtml ||
+                  !newService.serviceType
+                }
+              >
+                Thêm dịch vụ
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
