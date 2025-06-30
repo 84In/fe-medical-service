@@ -583,7 +583,7 @@ export function ContentTemplates({
                                   </Badge>
                                 ))}
                               </div>
-                              <div className="prose prose-sm max-w-none border rounded-lg p-4 bg-gray-50">
+                              <div className="tiptap prose prose-sm max-w-none border rounded-lg p-4 bg-gray-50">
                                 <div
                                   dangerouslySetInnerHTML={{
                                     __html: template.content,

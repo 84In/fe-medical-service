@@ -188,7 +188,7 @@ export default async function ServiceDetailPage({
               <Separator className="my-6" />
 
               {/* Service content */}
-              <div className="prose prose-blue max-w-none">
+              <div className="tiptap prose prose-blue max-w-none">
                 <div
                   dangerouslySetInnerHTML={{ __html: service.contentHtml }}
                 />

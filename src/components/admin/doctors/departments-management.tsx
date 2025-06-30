@@ -654,7 +654,7 @@ export function DepartmentsManagement() {
                 <Label className="text-sm font-medium text-gray-700">
                   Mô tả chi tiết
                 </Label>
-                <div className="mt-1 p-3 bg-gray-50 rounded-lg prose prose-sm max-w-none">
+                <div className="tiptap mt-1 p-3 bg-gray-50 rounded-lg prose prose-sm max-w-none">
                   <div
                     dangerouslySetInnerHTML={{
                       __html: viewingDepartment.contentHtml,

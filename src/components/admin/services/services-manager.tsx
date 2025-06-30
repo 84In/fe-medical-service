@@ -1074,7 +1074,7 @@ export default function ServicesManagement() {
                   <Label className="text-sm font-medium text-gray-700">
                     Mô tả chi tiết
                   </Label>
-                  <div className="mt-1 p-3 bg-gray-50 rounded-lg prose prose-sm max-w-none overflow-x-auto">
+                  <div className="tiptap mt-1 p-3 bg-gray-50 rounded-lg prose prose-sm max-w-none overflow-x-auto">
                     <div
                       dangerouslySetInnerHTML={{
                         __html: viewingService.contentHtml,

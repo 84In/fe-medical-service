@@ -140,7 +140,7 @@ export default async function ChuyenKhoaDetailPage({
               </CardHeader>
               <CardContent>
                 <div
-                  className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-4 prose-h4:font-semibold prose-h4:mb-2 prose-p:text-gray-700 prose-p:leading-relaxed prose-ul:space-y-1 prose-li:text-gray-800"
+                  className="tiptap prose prose-lg max-w-none prose-headings:text-gray-900 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-4 prose-h4:font-semibold prose-h4:mb-2 prose-p:text-gray-700 prose-p:leading-relaxed prose-ul:space-y-1 prose-li:text-gray-800"
                   dangerouslySetInnerHTML={{ __html: department.contentHtml }}
                 />
               </CardContent>

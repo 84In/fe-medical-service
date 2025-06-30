@@ -247,7 +247,7 @@ export default function NavHeader() {
                     )}`}
                   >
                     <span
-                      className="prose max-h-10 overflow-hidden text-sm text-muted-foreground"
+                      className="tiptap prose max-h-10 overflow-hidden text-sm text-muted-foreground"
                       dangerouslySetInnerHTML={{
                         __html: department.contentHtml,
                       }}
