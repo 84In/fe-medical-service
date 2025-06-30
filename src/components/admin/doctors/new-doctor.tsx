@@ -89,7 +89,12 @@ export default function DoctorForm({
         ({ id, ...rest }) => rest
       ),
       workingHours: (newDoctor.workingHours || []).map(
-        ({ id, ...rest }) => rest
+        ({ id, startTime, endTime, isAvailable, ...rest }) => ({
+          ...rest,
+          startTime: isAvailable ? startTime : null,
+          endTime: isAvailable ? endTime : null,
+          isAvailable,
+        })
       ),
     };
 
