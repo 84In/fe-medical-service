@@ -12,7 +12,7 @@ import { isAxiosError } from "axios";
 import { setCookie } from "cookies-next";
 import { GalleryVerticalEnd, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FormData = {
@@ -36,6 +36,15 @@ export function LoginForm({
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>();
+
+  useEffect(() => {
+    const token = useAuthStore.getState().token;
+    const user = useAuthStore.getState().user;
+
+    if (token && user?.role?.name) {
+      router.replace("/admin");
+    }
+  }, []);
 
   async function onSubmit(data: FormData) {
     setError("");
@@ -67,7 +76,7 @@ export function LoginForm({
         // 4. Chờ 1s rồi chuyển hướng
         setTimeout(() => {
           router.push("/admin");
-        }, 1000);
+        }, 900);
       } else {
         setError(res.data.message || "Đăng nhập thất bại");
       }
