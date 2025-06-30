@@ -487,7 +487,7 @@ export function TiptapEditor({
       </Card>
 
       {/* Editor Area */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="tiptap border rounded-lg overflow-hidden">
         {isPreview ? (
           <div
             className="p-4 prose prose-sm max-w-none min-h-[200px] bg-gray-50"
