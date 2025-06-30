@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Medical Service Website
 
-## Getting Started
+This is a [Next.js](https://nextjs.org) project built to introduce and showcase **medical services**, including departments, doctors, health packages, and news updates.
+The project was bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-First, run the development server:
+👉 **Live Site:** [https://vanoushop.io.vn](https://vanoushop.io.vn)
+
+## 🚀 Getting Started
+
+To run this project locally, follow the steps below:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Start the development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000) in your browser to view the site.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the homepage by modifying `app/page.tsx`. The application supports hot-reloading for fast development.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠 Technologies Used
 
-## Learn More
+* **Frontend Framework**: [Next.js 14](https://nextjs.org)
+* **Styling**: [Tailwind CSS](https://tailwindcss.com)
+* **Rich Text Support**: [Tiptap Editor](https://tiptap.dev)
+* **Icon Library**: [Lucide React](https://lucide.dev)
+* **State Management**: Zustand
+* **API Communication**: Axios
+* **Font Optimization**: [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) with [Geist](https://vercel.com/font)
+* **Deployment**: [Vercel](https://vercel.com)
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+.
+├── app/                  # Next.js app directory
+├── components/           # UI and reusable components
+├── lib/                  # Utility functions
+├── store/                # Zustand store
+├── types/                # TypeScript types/interfaces
+├── public/               # Static assets
+└── styles/               # Global styles
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📚 Learn More
 
-## Deploy on Vercel
+* [Next.js Documentation](https://nextjs.org/docs)
+* [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+* [Tiptap Editor Docs](https://tiptap.dev)
+* [Vercel Deployment Guide](https://nextjs.org/docs/app/building-your-application/deploying)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🌐 Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The website is deployed on **Vercel**, the platform created by the makers of Next.js.
+
+🔗 **Live Deployment**: [https://vanoushop.io.vn](https://vanoushop.io.vn)
+
+---
+
+Made with ❤️ by **Nguyễn Trung Tín** – Medical Service Website Project @VASD.
