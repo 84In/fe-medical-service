@@ -21,6 +21,7 @@ import {
   getServiceByIdServer,
   getServices,
 } from "@/services/services.service";
+import { toast } from "@/hooks/use-toast";
 
 const getServiceSlug = (service: Service) => {
   return `${toSlug(service.name)}-${service.id}`;
@@ -113,6 +114,24 @@ export default async function ServiceDetailPage({
 
   const relatedServices = await getRelatedServices(service, 3);
 
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  const handleCopyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "📋 Đã sao chép liên kết!",
+        description: "Bạn có thể chia sẻ liên kết này ở bất kỳ đâu.",
+        variant: "success",
+      });
+    } catch (err) {
+      toast({
+        title: "❌ Không thể sao chép",
+        description: "Trình duyệt không hỗ trợ hoặc xảy ra lỗi.",
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="container mx-auto pb-2 px-4 md:px-2">
       {/* Breadcrumb */}
@@ -180,7 +199,12 @@ export default async function ServiceDetailPage({
                   <Phone className="h-5 w-5 mr-2" />
                   Gọi tư vấn
                 </Button>
-                <Button variant="ghost" size="icon" className="ml-auto">
+                <Button
+                  onClick={() => handleCopyLink(currentUrl)}
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto"
+                >
                   <Share2 className="h-5 w-5" />
                 </Button>
               </div>
