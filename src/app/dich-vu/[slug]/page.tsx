@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { CopyLinkButton } from "@/components/services/copy-link-button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/hooks/use-toast";
+import {
+  fetchServices,
+  getServiceByIdServer,
+} from "@/services/services.service";
+import type { Service } from "@/types/services";
+import { toSlug } from "@/utils/slugify";
 import {
   ChevronRight,
   Clock,
@@ -14,14 +19,8 @@ import {
   Phone,
   Share2,
 } from "lucide-react";
-import { toSlug } from "@/utils/slugify";
-import type { Service, ServiceType } from "@/types/services";
-import {
-  fetchServices,
-  getServiceByIdServer,
-  getServices,
-} from "@/services/services.service";
-import { toast } from "@/hooks/use-toast";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 const getServiceSlug = (service: Service) => {
   return `${toSlug(service.name)}-${service.id}`;
@@ -114,8 +113,6 @@ export default async function ServiceDetailPage({
 
   const relatedServices = await getRelatedServices(service, 3);
 
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-
   const handleCopyLink = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
@@ -132,6 +129,7 @@ export default async function ServiceDetailPage({
       });
     }
   };
+
   return (
     <div className="container mx-auto pb-2 px-4 md:px-2">
       {/* Breadcrumb */}
@@ -199,14 +197,7 @@ export default async function ServiceDetailPage({
                   <Phone className="h-5 w-5 mr-2" />
                   Gọi tư vấn
                 </Button>
-                <Button
-                  onClick={() => handleCopyLink(currentUrl)}
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto"
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
+                <CopyLinkButton />
               </div>
 
               <Separator className="my-6" />
