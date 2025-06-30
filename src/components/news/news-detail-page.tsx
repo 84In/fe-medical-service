@@ -174,7 +174,7 @@ export async function NewsDetailPage({ article, relatedNews }: Props) {
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-8">
                     <div
-                      className="prose prose-lg max-w-none"
+                      className="tiptap prose prose-lg max-w-none"
                       dangerouslySetInnerHTML={{ __html: article.contentHtml }}
                     />
 

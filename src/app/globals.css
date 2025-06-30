@@ -456,3 +456,20 @@
 .font-ibm-plex-sans {
   font-family: var(--font-ibm-plex-sans);
 }
+
+/* styles.css hoặc globals.css */
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem; /* tương đương pl-6 */
+  margin-bottom: 1rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap li {
+  margin-bottom: 0.25rem; /* mb-1 */
+}

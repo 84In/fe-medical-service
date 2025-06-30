@@ -1275,7 +1275,7 @@ export function NewsManagement() {
                 <Label className="text-sm font-medium text-gray-500">
                   Nội dung chi tiết
                 </Label>
-                <div className="mt-2 prose prose-sm max-w-none border rounded-lg p-4 bg-gray-50">
+                <div className="tiptap mt-2 prose prose-sm max-w-none border rounded-lg p-4 bg-gray-50">
                   <div
                     dangerouslySetInnerHTML={{
                       __html: selectedNews.contentHtml,
