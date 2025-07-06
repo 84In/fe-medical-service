@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   keywords:
     "medical, healthcare, admin, dashboard, hospital, clinic, patient management",
   authors: [{ name: "VASD IT Team" }],
-  robots: "noindex, nofollow",
 };
 
 export default function DoctorsLayout({
