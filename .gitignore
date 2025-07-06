@@ -42,4 +42,3 @@ next-env.d.ts
 # sitemap
 public/sitemap.xml
 public/sitemap-*.xml
-public/robots.txt

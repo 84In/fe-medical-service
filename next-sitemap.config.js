@@ -1,7 +1,7 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
   siteUrl: "https://vanoushop.io.vn",
-  generateRobotsTxt: true,
+  generateRobotsTxt: false,
   sitemapSize: 5000,
   exclude: ["/admin", "/admin/**", "/login"],
   robotsTxtOptions: {
