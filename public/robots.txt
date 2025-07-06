@@ -1,0 +1,8 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+
+# Sitemaps
+Sitemap: https://vanoushop.io.vn/sitemap.xml
