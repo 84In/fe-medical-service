@@ -13,7 +13,7 @@ module.exports = {
       },
     ],
     additionalSitemaps: [
-      "https://vanoushop.io.vn/sitemap.xml",
+      // "https://vanoushop.io.vn/sitemap.xml",
       // "https://vanoushop.io.vn/blog-sitemap.xml" // nếu dùng blog riêng
     ],
   },
