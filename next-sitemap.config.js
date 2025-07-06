@@ -4,13 +4,17 @@ module.exports = {
   generateRobotsTxt: true,
   sitemapSize: 5000,
   exclude: ["/admin", "/admin/**", "/login"],
-  // robotsTxtOptions: {
-  //   additionalSitemaps: ["https://vanoushop.io.vn/blog-sitemap.xml"],
-  // },
   robotsTxtOptions: {
     policies: [
-      { userAgent: "*", allow: "/" },
-      { userAgent: "*", disallow: ["/admin", "/login"] },
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: ["/admin", "/login"],
+      },
+    ],
+    additionalSitemaps: [
+      "https://vanoushop.io.vn/sitemap.xml",
+      // "https://vanoushop.io.vn/blog-sitemap.xml" // nếu dùng blog riêng
     ],
   },
 };
