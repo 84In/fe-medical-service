@@ -4,7 +4,7 @@ module.exports = {
   generateRobotsTxt: true,
   sitemapSize: 5000,
   exclude: ["/admin", "/login"],
-  robotsTxtOptions: {
-    additionalSitemaps: ["https://vanoushop.io.vn/blog-sitemap.xml"],
-  },
+  // robotsTxtOptions: {
+  //   additionalSitemaps: ["https://vanoushop.io.vn/blog-sitemap.xml"],
+  // },
 };
